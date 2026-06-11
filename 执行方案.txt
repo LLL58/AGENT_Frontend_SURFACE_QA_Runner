@@ -1,0 +1,1001 @@
+
+前端表层 Bug 自动巡检工具
+Surface QA Agent Runner
+
+它的核心目标是：
+
+agent 运行一个命令
+  ↓
+工具自动打开页面、识别控件、执行低风险操作
+  ↓
+收集前端报错、接口错误、白屏、按钮异常、loading 卡死
+  ↓
+输出结构化 JSON 反馈
+  ↓
+agent 根据反馈修复代码
+  ↓
+agent 重新运行工具验证
+
+Playwright 适合作为底层执行器，因为它支持浏览器自动化、页面事件监听、截图、trace、reporter、CLI 测试运行等能力；官方也支持同时使用多个 reporter，例如终端输出加 JSON 文件输出。 Playwright 的 Page 也可以监听页面事件，网络请求的 request / response / requestfailed 生命周期适合做前端异常采集；注意 HTTP 404/503 仍然是 HTTP 层面“完成的响应”，所以必须监听 response.status()，不能只监听 requestfailed。 Trace Viewer 可以查看执行 timeline、DOM 快照、网络请求，非常适合作为失败证据给人和 agent 分析。
+
+1. 方案评估
+1.1 能解决的问题
+
+第一版可以稳定检查：
+
+页面白屏
+页面 JS runtime error
+console.error
+接口 4xx / 5xx
+request failed
+按钮无法点击
+按钮点击后前端报错
+按钮点击后接口报错
+链接跳转 404
+表单无法输入
+loading 卡死
+locator 失效
+危险按钮误触发风险
+1.2 不能解决的问题
+
+它不能自动判断复杂业务正确性，例如：
+
+订单金额是否算对
+权限规则是否完全正确
+复杂审批流是否符合预期
+保存后的数据是否完全符合业务语义
+UI 设计是否美观
+文案是否产品满意
+
+所以第一版不要追求“全业务自动测试”，而是做：
+
+表层错误发现
+结构化错误输出
+agent 可复现修复
+1.3 最终判断
+
+这个方案可行，且值得做。
+关键不是“自动点得多聪明”，而是错误反馈必须结构化、可复现、可被 agent 读取。
+
+2. 最终工具架构
+┌──────────────────────────────────────┐
+│ CLI Runner                            │
+│ npm run surface:agent                 │
+└──────────────────┬───────────────────┘
+                   ↓
+┌──────────────────────────────────────┐
+│ Config Loader                         │
+│ routes / auth / risk / output / env   │
+└──────────────────┬───────────────────┘
+                   ↓
+┌──────────────────────────────────────┐
+│ Browser Session                       │
+│ chromium / context / page / trace     │
+└──────────────────┬───────────────────┘
+                   ↓
+┌──────────────────────────────────────┐
+│ Auth Bootstrap                        │
+│ login / storageState / test account   │
+└──────────────────┬───────────────────┘
+                   ↓
+┌──────────────────────────────────────┐
+│ Error Collector                       │
+│ console / pageerror / response / req  │
+└──────────────────┬───────────────────┘
+                   ↓
+┌──────────────────────────────────────┐
+│ Page Health Checker                   │
+│ white screen / load / 404 / 500       │
+└──────────────────┬───────────────────┘
+                   ↓
+┌──────────────────────────────────────┐
+│ Control Scanner                       │
+│ button / link / input / select        │
+└──────────────────┬───────────────────┘
+                   ↓
+┌──────────────────────────────────────┐
+│ Risk Classifier                       │
+│ safe / warning / danger               │
+└──────────────────┬───────────────────┘
+                   ↓
+┌──────────────────────────────────────┐
+│ Action Executor                       │
+│ click / fill / select / check         │
+└──────────────────┬───────────────────┘
+                   ↓
+┌──────────────────────────────────────┐
+│ Result Checker                        │
+│ errors / stuck / url / dom / request  │
+└──────────────────┬───────────────────┘
+                   ↓
+┌──────────────────────────────────────┐
+│ Feedback Sink                         │
+│ stdout / ndjson / summary / artifact  │
+└──────────────────┬───────────────────┘
+                   ↓
+┌──────────────────────────────────────┐
+│ Agent Bridge                          │
+│ issue JSON → agent 修复 → rerun       │
+└──────────────────────────────────────┘
+3. 目录架构
+frontend/
+  package.json
+  playwright.config.ts
+
+  tests/
+    surface/
+      run-agent-surface-check.ts
+
+      config/
+        surface.config.ts
+        routes.ts
+        risk-rules.ts
+        ignore-rules.ts
+        auth.config.ts
+
+      core/
+        types.ts
+        config-loader.ts
+        browser-session.ts
+        auth-bootstrap.ts
+        route-runner.ts
+        page-health-checker.ts
+        control-scanner.ts
+        risk-classifier.ts
+        action-executor.ts
+        result-checker.ts
+        retry-policy.ts
+
+      collectors/
+        browser-error-collector.ts
+        console-collector.ts
+        network-collector.ts
+        performance-collector.ts
+
+      feedback/
+        feedback-sink.ts
+        issue-factory.ts
+        artifact-writer.ts
+        stdout-writer.ts
+        summary-writer.ts
+        ndjson-writer.ts
+
+      agent/
+        agent-contract.ts
+        agent-readable-report.ts
+        agent-instructions.md
+
+      utils/
+        dom-signature.ts
+        white-screen.ts
+        stable-selector.ts
+        sleep.ts
+        hash.ts
+        file.ts
+
+  .agent-feedback/
+    latest/
+      run-summary.json
+      issues.ndjson
+      issues/
+        issue-001.json
+      artifacts/
+        issue-001-screenshot.png
+        issue-001-page.html
+        trace.zip
+4. 配置定义
+4.1 surface.config.ts
+export interface SurfaceConfig {
+  baseUrl: string;
+  outputDir: string;
+
+  browser: {
+    name: 'chromium' | 'firefox' | 'webkit';
+    headless: boolean;
+    viewport: {
+      width: number;
+      height: number;
+    };
+    trace: boolean;
+    video: boolean;
+    screenshot: boolean;
+  };
+
+  auth: AuthConfig;
+
+  scan: {
+    maxRoutes: number;
+    maxControlsPerPage: number;
+    maxDepth: number;
+    afterActionWaitMs: number;
+    actionTimeoutMs: number;
+    pageTimeoutMs: number;
+  };
+
+  risk: {
+    allowWarningActions: boolean;
+    allowDangerActions: boolean;
+    dangerWords: string[];
+    warningWords: string[];
+    denyUrlPatterns: string[];
+  };
+
+  ignore: {
+    consolePatterns: string[];
+    networkUrlPatterns: string[];
+    statusCodes: number[];
+  };
+
+  agent: {
+    stdoutJson: boolean;
+    failOnSeverity: 'critical' | 'error' | 'warning';
+  };
+}
+
+export interface AuthConfig {
+  mode: 'none' | 'login-form' | 'storage-state';
+  loginUrl?: string;
+  username?: string;
+  password?: string;
+  usernameTestId?: string;
+  passwordTestId?: string;
+  submitTestId?: string;
+  storageStatePath?: string;
+}
+4.2 routes.ts
+export interface SurfaceRoute {
+  id: string;
+  name: string;
+  url: string;
+  requireLogin?: boolean;
+  tags?: string[];
+
+  scan?: {
+    enabled: boolean;
+    maxControls?: number;
+  };
+
+  rules?: {
+    allowWarningActions?: boolean;
+    denyTextPatterns?: string[];
+    denyUrlPatterns?: string[];
+  };
+}
+
+export const routes: SurfaceRoute[] = [
+  {
+    id: 'login',
+    name: '登录页',
+    url: '/login',
+    requireLogin: false,
+  },
+  {
+    id: 'dashboard',
+    name: '首页',
+    url: '/dashboard',
+    requireLogin: true,
+  },
+  {
+    id: 'profile',
+    name: '个人资料',
+    url: '/profile',
+    requireLogin: true,
+  },
+];
+5. 核心数据接口定义
+5.1 控件模型
+export type ControlType =
+  | 'button'
+  | 'link'
+  | 'input'
+  | 'textarea'
+  | 'select'
+  | 'checkbox'
+  | 'radio'
+  | 'unknown';
+
+export type RiskLevel = 'safe' | 'warning' | 'danger';
+
+export interface ControlCandidate {
+  id: string;
+  type: ControlType;
+
+  tag: string;
+  role: string | null;
+  text: string;
+  ariaLabel: string | null;
+  testId: string | null;
+  name: string | null;
+  href: string | null;
+  inputType: string | null;
+
+  selector: string;
+  visible: boolean;
+  disabled: boolean;
+
+  risk: RiskLevel;
+
+  rect?: {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  };
+}
+5.2 错误模型
+export interface ConsoleIssue {
+  type: 'error' | 'warning' | 'pageerror';
+  text: string;
+  location?: {
+    url?: string;
+    lineNumber?: number;
+    columnNumber?: number;
+  };
+}
+
+export interface PageRuntimeError {
+  message: string;
+  stack?: string;
+}
+
+export interface NetworkIssue {
+  url: string;
+  method: string;
+  status?: number;
+  statusText?: string;
+  resourceType?: string;
+  failure?: string;
+}
+
+export interface BrowserErrorSnapshot {
+  consoleErrors: ConsoleIssue[];
+  pageErrors: PageRuntimeError[];
+  networkErrors: NetworkIssue[];
+  requestFailures: NetworkIssue[];
+}
+5.3 动作模型
+export type ActionType =
+  | 'goto'
+  | 'click'
+  | 'fill'
+  | 'select'
+  | 'check'
+  | 'uncheck';
+
+export interface SurfaceAction {
+  type: ActionType;
+  routeId: string;
+
+  control?: ControlCandidate;
+
+  inputValue?: string;
+
+  beforeUrl?: string;
+  afterUrl?: string;
+
+  beforeDomHash?: string;
+  afterDomHash?: string;
+}
+5.4 Agent Issue 模型
+export type AgentIssueCategory =
+  | 'console-error'
+  | 'page-error'
+  | 'network-error'
+  | 'request-failed'
+  | 'white-screen'
+  | 'action-timeout'
+  | 'stuck-loading'
+  | 'locator-error'
+  | 'unexpected-navigation'
+  | 'no-observable-effect';
+
+export type AgentIssueSeverity =
+  | 'info'
+  | 'warning'
+  | 'error'
+  | 'critical';
+
+export interface AgentIssue {
+  id: string;
+  runId: string;
+
+  category: AgentIssueCategory;
+  severity: AgentIssueSeverity;
+
+  title: string;
+  message: string;
+
+  route: {
+    id: string;
+    name: string;
+    url: string;
+  };
+
+  action?: {
+    type: ActionType;
+    selector?: string;
+    text?: string;
+    testId?: string | null;
+    role?: string | null;
+    beforeUrl?: string;
+    afterUrl?: string;
+  };
+
+  reproduceSteps: string[];
+
+  evidence: {
+    consoleErrors?: ConsoleIssue[];
+    pageErrors?: PageRuntimeError[];
+    networkErrors?: NetworkIssue[];
+    requestFailures?: NetworkIssue[];
+
+    screenshotPath?: string;
+    htmlPath?: string;
+    tracePath?: string;
+    videoPath?: string;
+    domSnapshotPath?: string;
+  };
+
+  agentHints: {
+    suspectedArea?: string;
+    suggestedCheck?: string;
+    shouldOpenTrace?: boolean;
+    shouldInspectConsole?: boolean;
+    shouldInspectNetwork?: boolean;
+    shouldInspectDOM?: boolean;
+  };
+
+  createdAt: string;
+}
+5.5 Run Summary 模型
+export interface AgentRunSummary {
+  runId: string;
+
+  status:
+    | 'passed'
+    | 'passed_with_warnings'
+    | 'failed'
+    | 'tool_error'
+    | 'environment_error';
+
+  startedAt: string;
+  finishedAt: string;
+
+  baseUrl: string;
+
+  totalRoutes: number;
+  checkedRoutes: number;
+  totalControls: number;
+  totalActions: number;
+  totalIssues: number;
+
+  issueCountBySeverity: Record<string, number>;
+  issueCountByCategory: Record<string, number>;
+
+  feedbackDir: string;
+  summaryFile: string;
+  issuesFile: string;
+  artifactsDir: string;
+}
+6. 各模块接口定义
+6.1 Config Loader
+export interface ConfigLoader {
+  load(): Promise<SurfaceConfig>;
+  validate(config: SurfaceConfig): void;
+}
+
+职责：
+
+读取配置
+合并环境变量
+校验 baseUrl / outputDir / auth / scan 参数
+6.2 Browser Session
+export interface BrowserSession {
+  browser: Browser;
+  context: BrowserContext;
+  page: Page;
+
+  start(): Promise<void>;
+  stop(): Promise<void>;
+  startTrace(): Promise<void>;
+  stopTrace(tracePath: string): Promise<void>;
+}
+
+职责：
+
+启动浏览器
+创建 context
+开启 trace / video
+关闭浏览器
+输出 trace.zip
+6.3 Auth Bootstrap
+export interface AuthBootstrap {
+  loginIfNeeded(page: Page, config: SurfaceConfig): Promise<void>;
+}
+
+职责：
+
+无登录模式：跳过
+storage-state 模式：加载登录态
+login-form 模式：访问登录页，填写账号密码，点击登录
+6.4 Error Collector
+export interface ErrorCollector {
+  attach(page: Page): Promise<void>;
+  reset(): void;
+  snapshot(): Promise<BrowserErrorSnapshot>;
+}
+
+职责：
+
+监听 console.error
+监听 pageerror
+监听 window.error
+监听 unhandledrejection
+监听 response 4xx / 5xx
+监听 requestfailed
+6.5 Page Health Checker
+export interface PageHealthResult {
+  ok: boolean;
+  issues: Omit<AgentIssue, 'id' | 'runId' | 'createdAt'>[];
+}
+
+export interface PageHealthChecker {
+  check(page: Page, route: SurfaceRoute): Promise<PageHealthResult>;
+}
+
+检查项：
+
+页面是否能打开
+body 是否有可见内容
+是否白屏
+当前 URL 是否异常
+是否出现 404 / 500 页面
+是否已经产生 console/page/network 错误
+6.6 Control Scanner
+export interface ControlScanner {
+  scan(page: Page): Promise<ControlCandidate[]>;
+}
+
+扫描规则：
+
+button
+a[href]
+input:not([type="hidden"])
+textarea
+select
+[role="button"]
+[role="link"]
+[role="menuitem"]
+[onclick]
+[tabindex]:not([tabindex="-1"])
+[data-testid]
+
+选择器优先级：
+
+data-testid
+aria-label
+id
+name
+role + text
+fallback css
+6.7 Risk Classifier
+export interface RiskClassifier {
+  classify(control: ControlCandidate, config: SurfaceConfig): RiskLevel;
+  shouldExecute(control: ControlCandidate, config: SurfaceConfig): boolean;
+}
+
+风险等级：
+
+safe:
+  打开详情、展开菜单、切换 tab、普通输入
+
+warning:
+  保存、提交、创建、发布
+
+danger:
+  删除、支付、退款、注销、退出登录、真实发送
+
+第一版只执行：
+
+safe
+6.8 Action Executor
+export interface ActionExecutor {
+  execute(page: Page, action: SurfaceAction): Promise<void>;
+}
+
+动作定义：
+
+link/button/unknown → click
+input → fill
+textarea → fill
+select → selectOption
+checkbox/radio → check
+6.9 Result Checker
+export interface ActionCheckResult {
+  success: boolean;
+  issues: Omit<AgentIssue, 'id' | 'runId' | 'createdAt'>[];
+
+  beforeUrl: string;
+  afterUrl: string;
+  beforeDomHash: string;
+  afterDomHash: string;
+
+  urlChanged: boolean;
+  domChanged: boolean;
+  hasErrors: boolean;
+  stuckLoading: boolean;
+}
+
+export interface ResultChecker {
+  checkAfterAction(input: {
+    page: Page;
+    route: SurfaceRoute;
+    action: SurfaceAction;
+    snapshot: BrowserErrorSnapshot;
+  }): Promise<ActionCheckResult>;
+}
+
+判断逻辑：
+
+有 pageerror → critical
+有 console.error → error
+有接口 5xx → critical
+有接口 4xx → warning / error
+requestfailed → error
+白屏 → critical
+loading 超时 → error
+动作 timeout → error
+无任何可观察变化 → warning
+6.10 Feedback Sink
+export interface FeedbackSink {
+  init(): Promise<void>;
+
+  addIssue(
+    issue: Omit<AgentIssue, 'id' | 'runId' | 'createdAt'>,
+  ): Promise<AgentIssue>;
+
+  writeArtifact(input: {
+    page: Page;
+    issueId: string;
+    tracePath?: string;
+  }): Promise<{
+    screenshotPath: string;
+    htmlPath: string;
+    domSnapshotPath: string;
+  }>;
+
+  finish(summaryInput: {
+    totalRoutes: number;
+    checkedRoutes: number;
+    totalControls: number;
+    totalActions: number;
+  }): Promise<AgentRunSummary>;
+}
+
+职责：
+
+写 run-summary.json
+写 issues.ndjson
+写单个 issue JSON
+写 screenshot
+写 page.html
+写 DOM snapshot
+写 trace.zip
+向 stdout 输出 agent 可解析 JSON
+7. 执行定义
+7.1 命令定义
+{
+  "scripts": {
+    "surface:agent": "tsx tests/surface/run-agent-surface-check.ts",
+    "surface:agent:ci": "tsx tests/surface/run-agent-surface-check.ts --ci",
+    "surface:health": "tsx tests/surface/run-agent-surface-check.ts --health-only",
+    "surface:route": "tsx tests/surface/run-agent-surface-check.ts --route",
+    "surface:debug": "tsx tests/surface/run-agent-surface-check.ts --headed --debug"
+  }
+}
+
+Playwright 官方 CLI 支持通过 npx playwright test 运行测试、指定文件、headed/debug/project 等参数；这里我们额外封装 tsx runner，是为了让 agent 拿到更稳定的自定义 JSON 输出。
+
+7.2 CLI 参数
+--ci
+  CI 模式，有 error/critical 时返回非 0
+
+--health-only
+  只检查页面健康，不点击控件
+
+--route=/profile
+  只检查某个 route
+
+--max-routes=10
+  限制最多检查页面数
+
+--max-controls=20
+  限制每页最多执行控件数
+
+--allow-warning
+  允许执行 warning 动作
+
+--headed
+  有头浏览器模式
+
+--debug
+  调试模式
+
+--output=.agent-feedback/run-001
+  指定输出目录
+7.3 环境变量
+E2E_BASE_URL=http://localhost:3000
+E2E_USERNAME=test_user@example.com
+E2E_PASSWORD=Password123!
+AGENT_FEEDBACK_DIR=.agent-feedback/latest
+SURFACE_HEADLESS=true
+SURFACE_MAX_CONTROLS=20
+SURFACE_FAIL_ON=error
+7.4 执行流程
+1. 读取 config
+2. 创建 outputDir
+3. 启动 browser/context/page
+4. 开启 trace
+5. attach error collector
+6. 登录或加载 storageState
+7. 遍历 routes
+8. 打开页面
+9. 执行 page health check
+10. 扫描控件
+11. 过滤 danger 控件
+12. 逐个执行 safe 动作
+13. 每个动作后收集错误 snapshot
+14. 生成 issue
+15. 保存 artifact
+16. 写 stdout JSON
+17. 停止 trace
+18. 写 run-summary.json
+19. 根据 severity 设置 exit code
+8. 输出定义
+8.1 输出目录
+.agent-feedback/latest/
+  run-summary.json
+  issues.ndjson
+
+  issues/
+    issue-001.json
+    issue-002.json
+
+  artifacts/
+    trace.zip
+    issue-001-screenshot.png
+    issue-001-page.html
+    issue-001-dom.json
+    issue-002-screenshot.png
+    issue-002-page.html
+8.2 stdout 输出
+
+每一行都是 JSON，方便 agent 流式解析。
+
+issue event
+{
+  "type": "surface-qa.issue",
+  "issueId": "issue-001",
+  "severity": "critical",
+  "category": "page-error",
+  "title": "页面运行时发生未捕获异常",
+  "route": "/profile",
+  "action": {
+    "type": "click",
+    "selector": "[data-testid=\"profile.save-button\"]",
+    "text": "保存"
+  },
+  "message": "Cannot read properties of undefined"
+}
+summary event
+{
+  "type": "surface-qa.summary",
+  "status": "failed",
+  "totalRoutes": 3,
+  "totalActions": 24,
+  "totalIssues": 2,
+  "summaryFile": ".agent-feedback/latest/run-summary.json",
+  "issuesFile": ".agent-feedback/latest/issues.ndjson"
+}
+fatal event
+{
+  "type": "surface-qa.fatal",
+  "message": "Browser failed to launch",
+  "category": "tool_error"
+}
+8.3 run-summary.json
+{
+  "runId": "run-20260611-001",
+  "status": "failed",
+  "startedAt": "2026-06-11T10:00:00.000Z",
+  "finishedAt": "2026-06-11T10:01:12.000Z",
+  "baseUrl": "http://localhost:3000",
+  "totalRoutes": 3,
+  "checkedRoutes": 3,
+  "totalControls": 42,
+  "totalActions": 24,
+  "totalIssues": 2,
+  "issueCountBySeverity": {
+    "critical": 1,
+    "error": 1,
+    "warning": 0,
+    "info": 0
+  },
+  "issueCountByCategory": {
+    "page-error": 1,
+    "network-error": 1
+  },
+  "feedbackDir": ".agent-feedback/latest",
+  "summaryFile": ".agent-feedback/latest/run-summary.json",
+  "issuesFile": ".agent-feedback/latest/issues.ndjson",
+  "artifactsDir": ".agent-feedback/latest/artifacts"
+}
+8.4 issues.ndjson
+{"type":"issue","issue":{"id":"issue-001","severity":"critical","category":"page-error","title":"页面运行时发生未捕获异常"}}
+{"type":"issue","issue":{"id":"issue-002","severity":"error","category":"network-error","title":"接口返回异常状态码 500"}}
+8.5 单个 issue JSON
+{
+  "id": "issue-001",
+  "runId": "run-20260611-001",
+  "category": "page-error",
+  "severity": "critical",
+  "title": "页面运行时发生未捕获异常",
+  "message": "Cannot read properties of undefined reading 'name'",
+  "route": {
+    "id": "profile",
+    "name": "个人资料",
+    "url": "/profile"
+  },
+  "action": {
+    "type": "click",
+    "selector": "[data-testid=\"profile.save-button\"]",
+    "text": "保存",
+    "testId": "profile.save-button",
+    "beforeUrl": "http://localhost:3000/profile",
+    "afterUrl": "http://localhost:3000/profile"
+  },
+  "reproduceSteps": [
+    "打开页面：/profile",
+    "点击控件：[data-testid=\"profile.save-button\"]"
+  ],
+  "evidence": {
+    "pageErrors": [
+      {
+        "message": "Cannot read properties of undefined reading 'name'",
+        "stack": "TypeError: Cannot read properties..."
+      }
+    ],
+    "screenshotPath": ".agent-feedback/latest/artifacts/issue-001-screenshot.png",
+    "htmlPath": ".agent-feedback/latest/artifacts/issue-001-page.html",
+    "tracePath": ".agent-feedback/latest/artifacts/trace.zip",
+    "domSnapshotPath": ".agent-feedback/latest/artifacts/issue-001-dom.json"
+  },
+  "agentHints": {
+    "suggestedCheck": "检查 Profile 页面保存按钮事件、接口返回空值处理、undefined/null 访问。",
+    "shouldOpenTrace": true,
+    "shouldInspectConsole": true,
+    "shouldInspectNetwork": false,
+    "shouldInspectDOM": true
+  },
+  "createdAt": "2026-06-11T10:00:20.000Z"
+}
+9. 错误检查规则定义
+9.1 页面级错误
+检查项	判断	severity
+页面白屏	body 文本极少且可见元素极少	critical
+页面 404/500	主文档响应状态异常	critical
+pageerror	未捕获 JS 异常	critical
+console.error	控制台错误	error
+requestfailed	网络请求失败	error
+API 5xx	接口服务异常	critical
+API 4xx	参数、权限、路由问题	warning/error
+9.2 控件级错误
+检查项	判断	severity
+click timeout	按钮无法点击	error
+locator error	定位器失效或多匹配异常	error
+stuck loading	点击后长期 loading	error
+unexpected navigation	跳到 logout、payment、delete 等危险路径	critical
+no observable effect	点击后 URL、DOM、请求、弹窗都无变化	warning
+action 后 pageerror	点击后页面崩溃	critical
+action 后 network 5xx	点击后接口异常	critical
+10. 退出码定义
+0 = passed / passed_with_warnings
+1 = 发现 error 或 critical
+2 = 工具自身异常
+3 = 测试环境不可用
+4 = 配置错误
+
+CI 模式建议：
+
+if (summary.status === 'failed') {
+  process.exitCode = 1;
+} else if (summary.status === 'tool_error') {
+  process.exitCode = 2;
+} else if (summary.status === 'environment_error') {
+  process.exitCode = 3;
+} else {
+  process.exitCode = 0;
+}
+
+agent 逻辑：
+
+exit 0:
+  不需要修复，或者只有 warning
+
+exit 1:
+  读取 issues.ndjson，开始修复
+
+exit 2/3/4:
+  优先检查工具、环境、配置，不要直接改业务代码
+11. Agent 消费协议
+
+agent 每次运行后只需要遵守这个协议：
+
+1. 运行 npm run surface:agent
+2. 读取 stdout 中 surface-qa.summary
+3. 如果 status=passed，结束
+4. 如果 status=failed：
+   读取 .agent-feedback/latest/run-summary.json
+   读取 .agent-feedback/latest/issues.ndjson
+5. 按 severity 排序：
+   critical > error > warning > info
+6. 对每个 issue：
+   查看 route
+   查看 action
+   查看 message
+   查看 console/page/network errors
+   查看 screenshot/html/trace
+7. 定位代码修复
+8. 重新运行 npm run surface:agent
+9. 直到 summary.status=passed
+12. 最终 MVP 范围
+
+第一版只做这些：
+
+必须做：
+  页面打开
+  登录
+  console.error 采集
+  pageerror 采集
+  response 4xx/5xx 采集
+  requestfailed 采集
+  白屏检测
+  控件扫描
+  safe 动作执行
+  screenshot
+  html snapshot
+  trace.zip
+  issues.ndjson
+  run-summary.json
+  stdout JSON
+  exit code
+
+暂不做：
+  复杂业务断言
+  视觉回归
+  自动创建 GitHub Issue
+  自动 PR
+  复杂表单组合生成
+  多用户并发模拟
+13. 最终结论
+
+你的最终工具应该是一个 Agent-first Frontend Surface QA Runner。
+
+它不是普通测试报告工具，而是专门给 agent 设计的：
+
+可执行
+可复现
+可结构化读取
+可定位错误
+可保存证据
+可用退出码判断成功失败
+可被 agent 反复运行验证
+
+核心交付物就是这四个：
+
+npm run surface:agent
+.agent-feedback/latest/run-summary.json
+.agent-feedback/latest/issues.ndjson
+.agent-feedback/latest/artifacts/
+
+只要这四个稳定，后面无论接 GitHub Issue、Jira、修复 agent、CI 还是自动 PR，都会非常顺

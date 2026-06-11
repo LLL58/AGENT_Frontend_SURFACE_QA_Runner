@@ -1,0 +1,26 @@
+version: '0.1.0'
+
+# 项目级 AGS 配置
+# 此文件由 opencode agent 自动生成
+
+source:
+  type: global-config
+  generated_at: '2026-06-12T01:37:00Z'
+  global_config_path: 'C:\Users\liuyuxing\.config\opencode\ags-config.yaml'
+  checksum: 'sha256:87D18B83DE2432DE7B691EF7F885FB793FDD77577B07B391364D01524AE13D11'
+
+workspace:
+  id: 'ags://governance-template/main'
+  path: 'D:\Workspace\Agent-system\AGENT_WORKSPACE'
+
+instance:
+  id: 'surface-qa-runner'
+
+governance:
+  mode: 'strict'
+
+# 项目特定配置
+project:
+  name: 'AGENT_Frontend_SURFACE_QA_Runner'
+  type: 'frontend_qa_tool'
+  description: '前端表层 Bug 自动巡检工具'

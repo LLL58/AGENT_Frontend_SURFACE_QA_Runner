@@ -1,0 +1,22 @@
+version: 0.1.0
+
+# 项目实例引用
+# 此文件指向项目在 AGS 工作空间中的实例
+
+instance:
+  id: surface-qa-runner
+  workspace_id: ags://governance-template/main
+
+# 注册信息
+registered_at: '2026-06-12T01:37:00Z'
+registered_by: opencode-agent
+
+# 项目元数据
+metadata:
+  name: AGENT_Frontend_SURFACE_QA_Runner
+  type: frontend_qa_tool
+  description: 前端表层 Bug 自动巡检工具
+  tech_stack:
+    - playwright
+    - typescript
+    - nodejs

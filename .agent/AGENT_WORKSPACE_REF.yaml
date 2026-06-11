@@ -1,0 +1,18 @@
+version: 0.1.0
+
+# AGS 工作空间引用
+# 此文件指向项目关联的 AGS 治理工作空间
+
+workspace:
+  path: D:\Workspace\Agent-system\AGENT_WORKSPACE
+  id: ags://governance-template/main
+
+# 链接信息
+linked_at: '2026-06-12T01:37:00Z'
+linked_by: opencode-agent
+
+# 引用元数据
+metadata:
+  project_name: AGENT_Frontend_SURFACE_QA_Runner
+  project_type: frontend_qa_tool
+  description: 前端表层 Bug 自动巡检工具
