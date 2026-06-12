@@ -1,0 +1,25 @@
+# Dependencies
+node_modules/
+
+# Environment
+.env
+.env.local
+
+# Build
+dist/
+
+# Test Results
+test-results/
+playwright-report/
+
+# Agent Feedback
+.agent-feedback/*/artifacts/
+.agent-feedback/*/issues/
+
+# IDE
+.idea/
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
