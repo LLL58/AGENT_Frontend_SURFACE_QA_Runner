@@ -14,6 +14,12 @@ export default defineConfig({
       reporter: ['text', 'json', 'html'],
       include: ['tests/surface/**/*.ts'],
       exclude: ['tests/surface/**/*.test.ts'],
+      thresholds: {
+        lines: 80,
+        functions: 80,
+        branches: 80,
+        statements: 80,
+      },
     },
     testTimeout: 30000,
     hookTimeout: 30000,

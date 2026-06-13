@@ -25,54 +25,106 @@ describe('PageHealthChecker Integration', () => {
     await session.stop();
   });
 
-  it('should detect healthy page', async () => {
-    const page = session.getPage();
-    await page.setContent('<html><body><h1>Healthy Page</h1><p>Content here</p><div>More content</div></body></html>');
-    collector.attach(page);
+  describe('健康页面检测', () => {
+    it('应该检测健康页面', async () => {
+      const page = session.getPage();
+      await page.setContent('<html><body><h1>Healthy Page</h1><p>Content here</p><div>More content</div></body></html>');
+      collector.attach(page);
 
-    const result = await checker.check(page, {
-      id: 'test',
-      name: 'Test',
-      url: '/test',
+      const result = await checker.check(page, {
+        id: 'test',
+        name: 'Test',
+        url: '/test',
+      });
+
+      expect(result.ok).toBe(true);
+      expect(result.issues).toHaveLength(0);
     });
-
-    // 注意：健康检查可能因为其他原因失败（如 console 错误）
-    // 这里只验证结果结构正确
-    expect(result).toBeDefined();
-    expect(result.ok).toBeDefined();
-    expect(Array.isArray(result.issues)).toBe(true);
   });
 
-  it('should detect white screen', async () => {
-    const page = session.getPage();
-    await page.goto('data:text/html,<html><body></body></html>');
-    collector.attach(page);
+  describe('白屏检测', () => {
+    it('应该检测白屏页面', async () => {
+      const page = session.getPage();
+      await page.goto('data:text/html,<html><body></body></html>');
+      collector.attach(page);
 
-    const result = await checker.check(page, {
-      id: 'test',
-      name: 'Test',
-      url: '/test',
+      const result = await checker.check(page, {
+        id: 'test',
+        name: 'Test',
+        url: '/test',
+      });
+
+      expect(result.ok).toBe(false);
+      expect(result.issues).toHaveLength(1);
+      expect(result.issues[0].category).toBe('white-screen');
+      expect(result.issues[0].severity).toBe('critical');
     });
 
-    expect(result.ok).toBe(false);
-    expect(result.issues.some(i => i.category === 'white-screen')).toBe(true);
+    it('应该检测只有脚本的页面', async () => {
+      const page = session.getPage();
+      await page.goto('data:text/html,<html><body><script>console.log("test")</script></body></html>');
+      collector.attach(page);
+
+      const result = await checker.check(page, {
+        id: 'test',
+        name: 'Test',
+        url: '/test',
+      });
+
+      // 这个页面可能被检测为白屏
+      expect(result).toBeDefined();
+      expect(result.ok).toBeDefined();
+    });
   });
 
-  it('should detect page errors', async () => {
-    const page = session.getPage();
-    await page.goto('data:text/html,<html><body><h1>Page</h1></body></html>');
-    collector.attach(page);
-    
-    // 手动触发错误
-    await page.evaluate(() => {
-      window.dispatchEvent(new ErrorEvent('error', { message: 'Test error' }));
-    });
-    
-    // 等待错误被捕获
-    await page.waitForTimeout(500);
+  describe('错误检测', () => {
+    it('应该检测页面错误', async () => {
+      const page = session.getPage();
+      await page.goto('data:text/html,<html><body><h1>Page</h1></body></html>');
+      collector.attach(page);
+      
+      // 手动触发错误
+      await page.evaluate(() => {
+        window.dispatchEvent(new ErrorEvent('error', { message: 'Test error' }));
+      });
+      
+      // 等待错误被捕获
+      await page.waitForTimeout(500);
 
-    const snapshot = collector.getSnapshot();
-    // 注意：有些错误可能不会被捕获，取决于浏览器实现
-    expect(snapshot).toBeDefined();
+      const snapshot = collector.getSnapshot();
+      expect(snapshot).toBeDefined();
+    });
+  });
+
+  describe('边界条件', () => {
+    it('应该处理空页面', async () => {
+      const page = session.getPage();
+      await page.goto('about:blank');
+      collector.attach(page);
+
+      const result = await checker.check(page, {
+        id: 'test',
+        name: 'Test',
+        url: '/test',
+      });
+
+      expect(result).toBeDefined();
+      expect(result.ok).toBeDefined();
+    });
+
+    it('应该处理只有标题的页面', async () => {
+      const page = session.getPage();
+      await page.setContent('<html><head><title>Test</title></head><body></body></html>');
+      collector.attach(page);
+
+      const result = await checker.check(page, {
+        id: 'test',
+        name: 'Test',
+        url: '/test',
+      });
+
+      expect(result).toBeDefined();
+      expect(result.ok).toBeDefined();
+    });
   });
 });
