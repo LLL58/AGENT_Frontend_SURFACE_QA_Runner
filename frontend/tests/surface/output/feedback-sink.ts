@@ -1,7 +1,9 @@
 import type { Page } from 'playwright';
-import type { AgentIssue, AgentRunSummary } from '../core/types.js';
+import type { AgentIssue, AgentRunSummary, SurfaceConfig } from '../core/types.js';
 import { ArtifactWriter } from './artifact-writer.js';
 import { JsonWriter } from './json-writer.js';
+import { MarkdownWriter } from './markdown-writer.js';
+import { HtmlWriter } from './html-writer.js';
 
 /**
  * 反馈聚合器
@@ -10,11 +12,17 @@ import { JsonWriter } from './json-writer.js';
 export class FeedbackSink {
   private artifactWriter: ArtifactWriter;
   private jsonWriter: JsonWriter;
+  private markdownWriter: MarkdownWriter;
+  private htmlWriter: HtmlWriter;
   private issues: AgentIssue[] = [];
+  private config: SurfaceConfig;
 
-  constructor(outputDir: string) {
+  constructor(outputDir: string, config: SurfaceConfig) {
+    this.config = config;
     this.artifactWriter = new ArtifactWriter(outputDir);
     this.jsonWriter = new JsonWriter(outputDir);
+    this.markdownWriter = new MarkdownWriter(outputDir, config.report);
+    this.htmlWriter = new HtmlWriter(outputDir, config.report);
   }
 
   /**
@@ -66,6 +74,21 @@ export class FeedbackSink {
 
     // 输出摘要到 stdout
     this.jsonWriter.writeSummaryToStdout(summary);
+
+    // 生成人类可读报告
+    if (this.config.report.enabled) {
+      const formats = this.config.report.formats;
+
+      if (formats.includes('markdown')) {
+        const markdownPath = await this.markdownWriter.writeReport(summary, this.issues);
+        console.log(`📝 Markdown 报告已生成: ${markdownPath}`);
+      }
+
+      if (formats.includes('html')) {
+        const htmlPath = await this.htmlWriter.writeReport(summary, this.issues);
+        console.log(`🌐 HTML 报告已生成: ${htmlPath}`);
+      }
+    }
   }
 
   /**

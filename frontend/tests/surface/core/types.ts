@@ -7,6 +7,7 @@ export interface SurfaceConfig {
   scan: ScanConfig;
   ignore: IgnoreConfig;
   effectCheck: EffectCheckConfig;
+  report: ReportConfig;
 }
 
 // 效果检测配置
@@ -17,6 +18,15 @@ export interface EffectCheckConfig {
   checkDomChange: boolean;
   checkNetworkRequest: boolean;
   checkConsoleOutput: boolean;
+}
+
+// 报告配置
+export interface ReportConfig {
+  enabled: boolean;
+  formats: ('markdown' | 'html')[];
+  language: 'zh-CN' | 'en-US';
+  includeEvidence: boolean;
+  includeRecommendations: boolean;
 }
 
 // 浏览器配置

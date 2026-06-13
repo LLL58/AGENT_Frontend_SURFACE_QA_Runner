@@ -48,4 +48,11 @@ export const defaultConfig: SurfaceConfig = {
     checkNetworkRequest: true,
     checkConsoleOutput: false,
   },
+  report: {
+    enabled: true,
+    formats: ['markdown', 'html'],
+    language: 'zh-CN',
+    includeEvidence: true,
+    includeRecommendations: true,
+  },
 };

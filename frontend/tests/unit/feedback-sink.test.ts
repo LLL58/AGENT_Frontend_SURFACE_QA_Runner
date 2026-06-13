@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { FeedbackSink } from '../surface/output/feedback-sink.js';
-import type { AgentIssue, AgentRunSummary } from '../surface/core/types.js';
+import type { AgentIssue, AgentRunSummary, SurfaceConfig } from '../surface/core/types.js';
+import { defaultConfig } from '../surface/config/surface.config.js';
 
 // Mock 依赖
 vi.mock('../surface/output/artifact-writer.js', () => ({
@@ -20,6 +21,18 @@ vi.mock('../surface/output/json-writer.js', () => ({
     writeIssueJson: vi.fn().mockResolvedValue('/path/issue.json'),
     writeIssueToStdout: vi.fn(),
     writeSummaryToStdout: vi.fn(),
+  })),
+}));
+
+vi.mock('../surface/output/markdown-writer.js', () => ({
+  MarkdownWriter: vi.fn().mockImplementation(() => ({
+    writeReport: vi.fn().mockResolvedValue('/path/report.md'),
+  })),
+}));
+
+vi.mock('../surface/output/html-writer.js', () => ({
+  HtmlWriter: vi.fn().mockImplementation(() => ({
+    writeReport: vi.fn().mockResolvedValue('/path/report.html'),
   })),
 }));
 
@@ -66,13 +79,12 @@ describe('FeedbackSink', () => {
   };
 
   beforeEach(() => {
-    sink = new FeedbackSink('.agent-feedback/test');
+    sink = new FeedbackSink('.agent-feedback/test', defaultConfig);
     vi.clearAllMocks();
   });
 
   it('should initialize feedback system', async () => {
     await sink.init();
-    // 验证初始化成功（不抛出异常）
     expect(true).toBe(true);
   });
 
@@ -90,9 +102,12 @@ describe('FeedbackSink', () => {
     expect(result.domSnapshotPath).toBe('/path/dom.json');
   });
 
-  it('should generate summary', async () => {
+  it('should generate summary and reports', async () => {
+    const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    
     await sink.finish(mockSummary);
-    // 验证摘要生成成功（不抛出异常）
-    expect(true).toBe(true);
+    
+    expect(consoleSpy).toHaveBeenCalled();
+    consoleSpy.mockRestore();
   });
 });
