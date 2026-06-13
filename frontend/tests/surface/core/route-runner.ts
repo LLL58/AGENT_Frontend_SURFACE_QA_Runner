@@ -36,7 +36,7 @@ export class RouteRunner {
     this.controlScanner = new ControlScanner();
     this.riskClassifier = new RiskClassifier();
     this.actionExecutor = new ActionExecutor(config.scan.actionTimeout);
-    this.resultChecker = new ResultChecker(this.errorCollector);
+    this.resultChecker = new ResultChecker(this.errorCollector, config);
   }
 
   /**
@@ -92,8 +92,9 @@ export class RouteRunner {
               // 重置错误收集器
               this.errorCollector.reset();
 
-              // 记录执行前URL
+              // 记录执行前URL和DOM快照
               const beforeUrl = page.url();
+              const beforeDomSnapshot = await page.evaluate(() => document.body.innerHTML);
 
               // 执行动作
               await this.actionExecutor.execute(page, control, 'click');
@@ -103,7 +104,7 @@ export class RouteRunner {
               await page.waitForTimeout(this.config.scan.afterActionWaitMs);
 
               // 检查结果
-              const result = await this.resultChecker.checkAfterAction(page, route, control, beforeUrl);
+              const result = await this.resultChecker.checkAfterAction(page, route, control, beforeUrl, beforeDomSnapshot);
               if (!result.success) {
                 allIssues.push(...this.createIssues(runId, result.issues));
               }

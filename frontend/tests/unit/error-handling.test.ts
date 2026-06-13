@@ -5,6 +5,7 @@ import { PageHealthChecker } from '../surface/core/page-health-checker.js';
 import { ControlScanner } from '../surface/core/control-scanner.js';
 import { ActionExecutor } from '../surface/core/action-executor.js';
 import { ResultChecker } from '../surface/core/result-checker.js';
+import { defaultConfig } from '../surface/config/surface.config.js';
 
 describe('错误处理测试', () => {
   describe('BrowserSession 错误处理', () => {
@@ -211,7 +212,7 @@ describe('错误处理测试', () => {
     beforeEach(async () => {
       session = new BrowserSession();
       collector = new ErrorCollector();
-      checker = new ResultChecker(collector);
+      checker = new ResultChecker(collector, defaultConfig);
       
       await session.start({
         name: 'chromium',
@@ -231,6 +232,7 @@ describe('错误处理测试', () => {
       collector.attach(page);
 
       const beforeUrl = page.url();
+      const beforeDomSnapshot = await page.evaluate(() => document.body.innerHTML);
 
       const result = await checker.checkAfterAction(
         page,
@@ -248,7 +250,8 @@ describe('错误处理测试', () => {
           ariaLabel: null,
           testId: null,
         },
-        beforeUrl
+        beforeUrl,
+        beforeDomSnapshot
       );
 
       expect(result).toBeDefined();

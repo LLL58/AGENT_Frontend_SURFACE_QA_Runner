@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>登录 - Surface QA 测试</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header>
+    <nav>
+      <div class="logo">Surface QA 测试</div>
+      <ul class="nav-links">
+        <li><a href="/">主页</a></li>
+        <li><a href="/login" class="active">登录</a></li>
+        <li><a href="/dashboard">仪表盘</a></li>
+        <li><a href="/profile">个人资料</a></li>
+        <li><a href="/error">错误页面</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main>
+    <section class="login-section">
+      <div class="login-card">
+        <h1>用户登录</h1>
+        <form id="login-form" data-testid="login-form">
+          <div class="form-group">
+            <label for="username">用户名</label>
+            <input type="text" id="username" data-testid="username" name="username" placeholder="请输入用户名" required>
+          </div>
+          <div class="form-group">
+            <label for="password">密码</label>
+            <input type="password" id="password" data-testid="password" name="password" placeholder="请输入密码" required>
+          </div>
+          <div class="form-group">
+            <label class="checkbox-label">
+              <input type="checkbox" id="remember" data-testid="remember" name="remember">
+              <span>记住我</span>
+            </label>
+          </div>
+          <button type="submit" id="login-button" data-testid="login-button" class="btn btn-primary">登录</button>
+        </form>
+        <div class="login-links">
+          <a href="#" id="forgot-password" data-testid="forgot-password">忘记密码？</a>
+          <a href="#" id="register" data-testid="register">注册新账号</a>
+        </div>
+        <div id="login-message" class="message" style="display: none;"></div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <p>&copy; 2026 Surface QA 测试应用. All rights reserved.</p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

@@ -40,4 +40,12 @@ export const defaultConfig: SurfaceConfig = {
     ],
     statusCodes: [304],
   },
+  effectCheck: {
+    enabled: true,
+    severity: 'warning',
+    checkUrlChange: true,
+    checkDomChange: true,
+    checkNetworkRequest: true,
+    checkConsoleOutput: false,
+  },
 };

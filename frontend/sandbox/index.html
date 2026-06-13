@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>主页 - Surface QA 测试</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header>
+    <nav>
+      <div class="logo">Surface QA 测试</div>
+      <ul class="nav-links">
+        <li><a href="/" class="active">主页</a></li>
+        <li><a href="/login">登录</a></li>
+        <li><a href="/dashboard">仪表盘</a></li>
+        <li><a href="/profile">个人资料</a></li>
+        <li><a href="/error">错误页面</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero">
+      <h1>欢迎使用 Surface QA 测试应用</h1>
+      <p>这是一个用于测试前端表层 Bug 自动巡检工具的沙盒应用。</p>
+    </section>
+
+    <section class="search-section">
+      <h2>搜索功能</h2>
+      <div class="search-box">
+        <input type="text" id="search-input" data-testid="search-input" placeholder="输入搜索关键词...">
+        <select id="search-category" data-testid="search-category">
+          <option value="all">所有分类</option>
+          <option value="users">用户</option>
+          <option value="products">产品</option>
+          <option value="orders">订单</option>
+        </select>
+        <button id="search-button" data-testid="search-button">搜索</button>
+      </div>
+      <div id="search-result" class="search-result" style="display: none;">
+        <p>搜索结果将显示在这里...</p>
+      </div>
+    </section>
+
+    <section class="features">
+      <h2>功能特性</h2>
+      <div class="feature-grid">
+        <div class="feature-card">
+          <h3>页面健康检查</h3>
+          <p>检测页面是否正常加载，是否有白屏、JavaScript 错误等问题。</p>
+          <button class="btn" data-testid="feature-health">了解更多</button>
+        </div>
+        <div class="feature-card">
+          <h3>控件扫描</h3>
+          <p>自动扫描页面上的可交互控件，如按钮、链接、输入框等。</p>
+          <button class="btn" data-testid="feature-scan">了解更多</button>
+        </div>
+        <div class="feature-card">
+          <h3>错误收集</h3>
+          <p>收集页面运行时的各种错误，包括 JavaScript 错误、网络请求错误等。</p>
+          <button class="btn" data-testid="feature-error">了解更多</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="test-controls">
+      <h2>测试控件（用于测试检测功能）</h2>
+      <p>这些控件故意没有实现功能，用于测试工具是否能检测到"无效果"的情况。</p>
+      <div class="test-grid">
+        <div class="test-card">
+          <h3>无效果按钮</h3>
+          <p>点击后不会有任何变化</p>
+          <button id="no-effect-button" data-testid="no-effect-button" class="btn btn-warning">点击无效果</button>
+        </div>
+        <div class="test-card">
+          <h3>损坏的按钮</h3>
+          <p>onclick 为空</p>
+          <button id="broken-button" data-testid="broken-button" class="btn btn-warning" onclick="">损坏的按钮</button>
+        </div>
+        <div class="test-card">
+          <h3>空链接</h3>
+          <p>href 为 #</p>
+          <a href="#" id="empty-link" data-testid="empty-link" class="btn btn-warning">空链接</a>
+        </div>
+        <div class="test-card">
+          <h3>无效链接</h3>
+          <p>href 为 javascript:void(0)</p>
+          <a href="javascript:void(0)" id="invalid-link" data-testid="invalid-link" class="btn btn-warning">无效链接</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <p>&copy; 2026 Surface QA 测试应用. All rights reserved.</p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

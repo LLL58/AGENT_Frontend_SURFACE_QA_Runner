@@ -5,6 +5,12 @@ import type { SurfaceRoute } from '../core/types.js';
  */
 export const routes: SurfaceRoute[] = [
   {
+    id: 'home',
+    name: '主页',
+    url: '/',
+    requireLogin: false,
+  },
+  {
     id: 'login',
     name: '登录页',
     url: '/login',
@@ -12,14 +18,20 @@ export const routes: SurfaceRoute[] = [
   },
   {
     id: 'dashboard',
-    name: '首页',
+    name: '仪表盘',
     url: '/dashboard',
-    requireLogin: true,
+    requireLogin: false,
   },
   {
     id: 'profile',
     name: '个人资料',
     url: '/profile',
-    requireLogin: true,
+    requireLogin: false,
+  },
+  {
+    id: 'error',
+    name: '错误页面',
+    url: '/error',
+    requireLogin: false,
   },
 ];

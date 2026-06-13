@@ -6,6 +6,17 @@ export interface SurfaceConfig {
   auth: AuthConfig;
   scan: ScanConfig;
   ignore: IgnoreConfig;
+  effectCheck: EffectCheckConfig;
+}
+
+// 效果检测配置
+export interface EffectCheckConfig {
+  enabled: boolean;
+  severity: 'warning' | 'error';
+  checkUrlChange: boolean;
+  checkDomChange: boolean;
+  checkNetworkRequest: boolean;
+  checkConsoleOutput: boolean;
 }
 
 // 浏览器配置
