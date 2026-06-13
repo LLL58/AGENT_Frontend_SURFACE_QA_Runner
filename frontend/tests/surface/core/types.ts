@@ -108,9 +108,27 @@ export interface ControlCandidate {
 // 浏览器错误快照
 export interface BrowserErrorSnapshot {
   consoleErrors: string[];
-  pageErrors: string[];
-  networkErrors: string[];
+  pageErrors: PageErrorDetail[];
+  networkErrors: NetworkErrorDetail[];
   requestFailures: string[];
+}
+
+// 页面错误详情（简化版）
+export interface PageErrorDetail {
+  message: string;
+  type?: string;  // TypeError, ReferenceError 等
+}
+
+// 网络错误详情（完整版）
+export interface NetworkErrorDetail {
+  url: string;
+  method: string;
+  status?: number;
+  statusText?: string;
+  requestBody?: string;
+  responseBody?: string;
+  requestHeaders?: Record<string, string>;
+  responseHeaders?: Record<string, string>;
 }
 
 // 动作类型

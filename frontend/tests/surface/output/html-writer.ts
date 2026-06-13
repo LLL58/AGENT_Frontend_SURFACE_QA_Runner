@@ -638,30 +638,97 @@ export class HtmlWriter {
       return '';
     }
 
-    const links = [];
+    const sections = [];
 
-    if (issue.evidence?.screenshotPath) {
-      links.push(`<a href="${issue.evidence.screenshotPath}" target="_blank">📸 截图</a>`);
-    }
-
-    if (issue.evidence?.htmlPath) {
-      links.push(`<a href="${issue.evidence.htmlPath}" target="_blank">📄 HTML</a>`);
-    }
-
+    // JavaScript 错误详情
     if (issue.evidence?.pageErrors && issue.evidence.pageErrors.length > 0) {
-      links.push(`<span>🔍 错误: ${issue.evidence.pageErrors[0]}</span>`);
+      const errorDetails = issue.evidence.pageErrors.map(error => {
+        return `<div class="error-detail">
+          <p><strong>错误类型:</strong> ${error.type || 'Error'}</p>
+          <p><strong>错误消息:</strong> ${error.message}</p>
+        </div>`;
+      }).join('');
+      
+      sections.push(`<div class="evidence-section">
+        <h4>🔍 JavaScript 错误</h4>
+        ${errorDetails}
+      </div>`);
     }
 
+    // 网络错误详情
     if (issue.evidence?.networkErrors && issue.evidence.networkErrors.length > 0) {
-      links.push(`<span>🌐 网络: ${issue.evidence.networkErrors[0]}</span>`);
+      const networkDetails = issue.evidence.networkErrors.map(error => {
+        let detail = `<p><strong>请求 URL:</strong> ${error.url}</p>`;
+        detail += `<p><strong>请求方法:</strong> ${error.method}</p>`;
+        
+        if (error.status) {
+          detail += `<p><strong>状态码:</strong> ${error.status} ${error.statusText || ''}</p>`;
+        }
+        
+        if (error.requestHeaders) {
+          detail += `<p><strong>请求头:</strong></p><pre>${JSON.stringify(error.requestHeaders, null, 2)}</pre>`;
+        }
+        
+        if (error.requestBody) {
+          detail += `<p><strong>请求体:</strong></p><pre>${error.requestBody}</pre>`;
+        }
+        
+        if (error.responseHeaders) {
+          detail += `<p><strong>响应头:</strong></p><pre>${JSON.stringify(error.responseHeaders, null, 2)}</pre>`;
+        }
+        
+        if (error.responseBody) {
+          try {
+            const parsed = JSON.parse(error.responseBody);
+            detail += `<p><strong>响应体:</strong></p><pre>${JSON.stringify(parsed, null, 2)}</pre>`;
+          } catch {
+            detail += `<p><strong>响应体:</strong></p><pre>${error.responseBody}</pre>`;
+          }
+        }
+        
+        return `<div class="error-detail">${detail}</div>`;
+      }).join('');
+      
+      sections.push(`<div class="evidence-section">
+        <h4>🌐 网络错误</h4>
+        ${networkDetails}
+      </div>`);
     }
 
-    if (links.length === 0) {
+    // 控制台错误
+    if (issue.evidence?.consoleErrors && issue.evidence.consoleErrors.length > 0) {
+      const consoleDetails = issue.evidence.consoleErrors
+        .map(error => `<li><code>${error}</code></li>`)
+        .join('');
+      
+      sections.push(`<div class="evidence-section">
+        <h4>📝 控制台错误</h4>
+        <ul>${consoleDetails}</ul>
+      </div>`);
+    }
+
+    // 文件链接
+    const fileLinks = [];
+    if (issue.evidence?.screenshotPath) {
+      fileLinks.push(`<a href="${issue.evidence.screenshotPath}" target="_blank">📸 截图</a>`);
+    }
+    if (issue.evidence?.htmlPath) {
+      fileLinks.push(`<a href="${issue.evidence.htmlPath}" target="_blank">📄 HTML</a>`);
+    }
+    
+    if (fileLinks.length > 0) {
+      sections.push(`<div class="evidence-section">
+        <h4>📁 证据文件</h4>
+        <p>${fileLinks.join(' | ')}</p>
+      </div>`);
+    }
+
+    if (sections.length === 0) {
       return '';
     }
 
     return `<div class="issue-evidence">
-      ${links.join(' | ')}
+      ${sections.join('')}
     </div>`;
   }
 

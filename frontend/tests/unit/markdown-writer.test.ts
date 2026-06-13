@@ -49,7 +49,10 @@ describe('MarkdownWriter', () => {
       action: { type: 'click', selector: '#refresh-button', text: '刷新' },
       reproduceSteps: ['打开页面：/dashboard', '点击控件：刷新'],
       evidence: {
-        pageErrors: ['TypeError: Cannot read properties of undefined'],
+        pageErrors: [
+          { message: 'Cannot read properties of undefined (reading \'refresh\')', type: 'TypeError' },
+        ],
+        consoleErrors: ['Warning: Each child in a list should have a unique "key" prop.'],
         screenshotPath: '.agent-feedback/artifacts/issue-001-screenshot.png',
         htmlPath: '.agent-feedback/artifacts/issue-001-page.html',
       },
@@ -70,7 +73,18 @@ describe('MarkdownWriter', () => {
       action: { type: 'click', selector: '#save-button', text: '保存' },
       reproduceSteps: ['打开页面：/profile', '点击控件：保存'],
       evidence: {
-        networkErrors: ['500 /api/users/1'],
+        networkErrors: [
+          {
+            url: 'http://localhost:3010/api/users/1',
+            method: 'PUT',
+            status: 500,
+            statusText: 'Internal Server Error',
+            requestHeaders: { 'content-type': 'application/json' },
+            requestBody: '{"name":"test","email":"test@example.com"}',
+            responseHeaders: { 'content-type': 'application/json' },
+            responseBody: '{"error":"Internal Server Error","message":"Database connection failed"}',
+          },
+        ],
         screenshotPath: '.agent-feedback/artifacts/issue-002-screenshot.png',
       },
       agentHints: {

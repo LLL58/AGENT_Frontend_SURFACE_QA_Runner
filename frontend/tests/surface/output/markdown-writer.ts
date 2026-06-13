@@ -308,29 +308,84 @@ ${sections.join('\n\n')}`;
       return '';
     }
 
-    const links = [];
+    const sections = [];
 
-    if (issue.evidence?.screenshotPath) {
-      links.push(`- 📸 截图: [查看](${issue.evidence.screenshotPath})`);
-    }
-
-    if (issue.evidence?.htmlPath) {
-      links.push(`- 📄 HTML: [查看](${issue.evidence.htmlPath})`);
-    }
-
+    // JavaScript 错误详情
     if (issue.evidence?.pageErrors && issue.evidence.pageErrors.length > 0) {
-      links.push(`- 🔍 错误信息: \`${issue.evidence.pageErrors[0]}\``);
+      const errorDetails = issue.evidence.pageErrors.map(error => {
+        let detail = `**错误类型**: ${error.type || 'Error'}`;
+        detail += `\n**错误消息**: ${error.message}`;
+        return detail;
+      }).join('\n\n');
+      
+      sections.push(`### 🔍 JavaScript 错误\n\n${errorDetails}`);
     }
 
+    // 网络错误详情
     if (issue.evidence?.networkErrors && issue.evidence.networkErrors.length > 0) {
-      links.push(`- 🌐 网络错误: \`${issue.evidence.networkErrors[0]}\``);
+      const networkDetails = issue.evidence.networkErrors.map(error => {
+        let detail = `**请求 URL**: ${error.url}`;
+        detail += `\n**请求方法**: ${error.method}`;
+        
+        if (error.status) {
+          detail += `\n**状态码**: ${error.status} ${error.statusText || ''}`;
+        }
+        
+        if (error.requestHeaders) {
+          detail += `\n**请求头**:\n\`\`\`json\n${JSON.stringify(error.requestHeaders, null, 2)}\n\`\`\``;
+        }
+        
+        if (error.requestBody) {
+          detail += `\n**请求体**:\n\`\`\`json\n${error.requestBody}\n\`\`\``;
+        }
+        
+        if (error.responseHeaders) {
+          detail += `\n**响应头**:\n\`\`\`json\n${JSON.stringify(error.responseHeaders, null, 2)}\n\`\`\``;
+        }
+        
+        if (error.responseBody) {
+          // 尝试格式化 JSON
+          try {
+            const parsed = JSON.parse(error.responseBody);
+            detail += `\n**响应体**:\n\`\`\`json\n${JSON.stringify(parsed, null, 2)}\n\`\`\``;
+          } catch {
+            detail += `\n**响应体**:\n\`\`\`\n${error.responseBody}\n\`\`\``;
+          }
+        }
+        
+        return detail;
+      }).join('\n\n');
+      
+      sections.push(`### 🌐 网络错误\n\n${networkDetails}`);
     }
 
-    if (links.length === 0) {
+    // 控制台错误
+    if (issue.evidence?.consoleErrors && issue.evidence.consoleErrors.length > 0) {
+      const consoleDetails = issue.evidence.consoleErrors
+        .map(error => `- \`${error}\``)
+        .join('\n');
+      
+      sections.push(`### 📝 控制台错误\n\n${consoleDetails}`);
+    }
+
+    // 文件链接
+    const fileLinks = [];
+    if (issue.evidence?.screenshotPath) {
+      fileLinks.push(`- 📸 截图: [查看](${issue.evidence.screenshotPath})`);
+    }
+    if (issue.evidence?.htmlPath) {
+      fileLinks.push(`- 📄 HTML: [查看](${issue.evidence.htmlPath})`);
+    }
+    
+    if (fileLinks.length > 0) {
+      sections.push(`### 📁 证据文件\n\n${fileLinks.join('\n')}`);
+    }
+
+    if (sections.length === 0) {
       return '';
     }
 
-    return `\n**证据**:\n${links.join('\n')}`;
+    return `\n${sections.join('\n\n')}`;
   }
 
   /**

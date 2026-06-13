@@ -1,5 +1,5 @@
-import type { Page } from 'playwright';
-import type { BrowserErrorSnapshot } from './types.js';
+import type { Page, Response } from 'playwright';
+import type { BrowserErrorSnapshot, PageErrorDetail, NetworkErrorDetail } from './types.js';
 
 /**
  * 错误收集器
@@ -7,8 +7,8 @@ import type { BrowserErrorSnapshot } from './types.js';
  */
 export class ErrorCollector {
   private consoleErrors: string[] = [];
-  private pageErrors: string[] = [];
-  private networkErrors: string[] = [];
+  private pageErrors: PageErrorDetail[] = [];
+  private networkErrors: NetworkErrorDetail[] = [];
   private requestFailures: string[] = [];
   private attached = false;
 
@@ -29,14 +29,50 @@ export class ErrorCollector {
 
     // 监听页面错误（未捕获异常）
     page.on('pageerror', error => {
-      this.pageErrors.push(error.message);
+      this.pageErrors.push({
+        message: error.message,
+        type: error.name || 'Error',
+      });
     });
 
     // 监听响应错误（4xx/5xx）
-    page.on('response', response => {
+    page.on('response', async (response: Response) => {
       const status = response.status();
       if (status >= 400) {
-        this.networkErrors.push(`${status} ${response.url()}`);
+        try {
+          const networkError: NetworkErrorDetail = {
+            url: response.url(),
+            method: response.request().method(),
+            status: status,
+            statusText: response.statusText(),
+            requestHeaders: response.request().headers(),
+            responseHeaders: response.headers(),
+          };
+
+          // 尝试获取响应体
+          try {
+            networkError.responseBody = await response.text();
+          } catch {
+            // 忽略响应体获取失败
+          }
+
+          // 尝试获取请求体
+          try {
+            networkError.requestBody = response.request().postData() || undefined;
+          } catch {
+            // 忽略请求体获取失败
+          }
+
+          this.networkErrors.push(networkError);
+        } catch {
+          // 如果获取详细信息失败，使用简化版本
+          this.networkErrors.push({
+            url: response.url(),
+            method: response.request().method(),
+            status: status,
+            statusText: response.statusText(),
+          });
+        }
       }
     });
 

@@ -49,7 +49,10 @@ describe('HtmlWriter', () => {
       action: { type: 'click', selector: '#refresh-button', text: '刷新' },
       reproduceSteps: ['打开页面：/dashboard', '点击控件：刷新'],
       evidence: {
-        pageErrors: ['TypeError: Cannot read properties of undefined'],
+        pageErrors: [
+          { message: 'Cannot read properties of undefined (reading \'refresh\')', type: 'TypeError' },
+        ],
+        consoleErrors: ['Warning: Each child in a list should have a unique "key" prop.'],
         screenshotPath: '.agent-feedback/artifacts/issue-001-screenshot.png',
       },
       agentHints: {
