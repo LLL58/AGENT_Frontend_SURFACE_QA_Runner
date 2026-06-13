@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Test Page with Errors</title>
+</head>
+<body>
+  <h1>Test Page with Errors</h1>
+  <button id="error-button">Trigger Error</button>
+  <script>
+    // 故意触发运行时错误
+    document.getElementById('error-button').addEventListener('click', function() {
+      throw new Error('Test runtime error');
+    });
+  </script>
+</body>
+</html>

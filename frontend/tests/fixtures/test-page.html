@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Test Page</title>
+</head>
+<body>
+  <h1>Test Page</h1>
+  <button id="test-button" data-testid="test-button">Click Me</button>
+  <a href="/next" id="test-link" data-testid="test-link">Next Page</a>
+  <input type="text" id="test-input" data-testid="test-input" placeholder="Enter text">
+  <select id="test-select" data-testid="test-select">
+    <option value="1">Option 1</option>
+    <option value="2">Option 2</option>
+  </select>
+  <textarea id="test-textarea" placeholder="Enter description"></textarea>
+  <div id="result" style="display:none;">Action completed</div>
+  <script>
+    document.getElementById('test-button').addEventListener('click', function() {
+      document.getElementById('result').style.display = 'block';
+    });
+  </script>
+</body>
+</html>
