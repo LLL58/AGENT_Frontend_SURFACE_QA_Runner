@@ -83,6 +83,7 @@ export class ControlScanner {
         role: el.getAttribute('role'),
         ariaLabel: el.getAttribute('aria-label'),
         testId: el.getAttribute('data-testid'),
+        href: el.getAttribute('href'),
       }));
     });
   }

@@ -16,6 +16,11 @@ export class ActionExecutor {
    * 执行动作
    */
   async execute(page: Page, control: ControlCandidate, actionType: ActionType = 'click'): Promise<void> {
+    // 检查控件是否禁用
+    if (control.disabled) {
+      throw new Error(`Control ${control.id} is disabled`);
+    }
+
     const selector = control.selector;
 
     try {

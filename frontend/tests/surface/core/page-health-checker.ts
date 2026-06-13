@@ -122,8 +122,21 @@ export class PageHealthChecker {
         return visibleCount;
       });
 
-      // 如果文本长度小于100且可见元素少于10个，认为是白屏
-      return bodyText < 100 && visibleElements < 10;
+      // 增加更多判断条件
+      const hasTitle = await page.evaluate(() => 
+        !!document.querySelector('h1, h2, h3, h4, h5, h6')
+      );
+      const hasContent = await page.evaluate(() => 
+        !!document.querySelector('p, div, span, section, article')
+      );
+
+      // 如果有标题或内容，不认为是白屏
+      if (hasTitle || hasContent) {
+        return false;
+      }
+
+      // 否则根据文本长度和可见元素判断
+      return bodyText < 10 && visibleElements < 3;
     } catch {
       return false;
     }

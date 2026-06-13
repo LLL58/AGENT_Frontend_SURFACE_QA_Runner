@@ -192,26 +192,22 @@ describe('ActionExecutor Integration', () => {
       const shortTimeoutExecutor = new ActionExecutor(100); // 100ms 超时
       const page = session.getPage();
       
+      // 创建一个需要很长时间才能点击的按钮（使用动画延迟）
       await page.setContent(`
         <html>
           <body>
-            <button id="slow-btn">Click</button>
-            <script>
-              document.getElementById('slow-btn').addEventListener('click', () => {
-                // 模拟慢动作
-                return new Promise(resolve => setTimeout(resolve, 1000));
-              });
-            </script>
+            <button id="slow-btn" style="position: absolute; left: -9999px;">Click</button>
           </body>
         </html>
       `);
 
+      // 尝试点击一个不在视口中的按钮，这应该会超时
       await expect(shortTimeoutExecutor.execute(page, {
         id: 'slow-btn',
         type: 'button',
         selector: '#slow-btn',
         text: 'Click',
-        visible: true,
+        visible: false,
         disabled: false,
         risk: 'safe',
         tag: 'button',

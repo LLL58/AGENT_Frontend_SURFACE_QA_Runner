@@ -81,6 +81,7 @@ export interface ControlCandidate {
   role: string | null;
   ariaLabel: string | null;
   testId: string | null;
+  href?: string | null;
 }
 
 // 浏览器错误快照
