@@ -13,6 +13,8 @@ import { ControlScanner } from './control-scanner.js';
 import { RiskClassifier } from './risk-classifier.js';
 import { ActionExecutor } from './action-executor.js';
 import { ResultChecker } from './result-checker.js';
+import { logger } from '../utils/logger.js';
+import { performanceMonitor } from '../utils/performance.js';
 
 /**
  * 路由运行器
@@ -50,20 +52,29 @@ export class RouteRunner {
     let totalControls = 0;
     let totalActions = 0;
 
+    performanceMonitor.start('total-run');
+
     try {
       // 启动浏览器
+      logger.info('启动浏览器...');
       const page = await this.session.start(this.config.browser);
       
       // 附加错误收集器
       this.errorCollector.attach(page);
 
       // 遍历路由
-      for (const route of routes.slice(0, this.config.scan.maxRoutes)) {
+      const routesToCheck = routes.slice(0, this.config.scan.maxRoutes);
+      logger.info(`开始检查 ${routesToCheck.length} 个路由`);
+
+      for (const route of routesToCheck) {
         try {
+          performanceMonitor.start(`route-${route.id}`);
+          
           // 重置错误收集器
           this.errorCollector.reset();
 
           // 导航到页面
+          logger.info(`导航到: ${route.url}`);
           await page.goto(`${this.config.baseUrl}${route.url}`, {
             timeout: this.config.browser.timeout,
           });
@@ -79,12 +90,14 @@ export class RouteRunner {
           if (!healthResult.ok) {
             allIssues.push(...this.createIssues(runId, healthResult.issues));
             checkedRoutes++;
+            performanceMonitor.end(`route-${route.id}`);
             continue;
           }
 
           // 扫描控件
           const controls = await this.controlScanner.scan(page, this.config.scan.maxControls);
           totalControls += controls.length;
+          logger.info(`扫描到 ${controls.length} 个控件`);
 
           // 执行安全动作
           for (const control of controls) {
@@ -100,6 +113,7 @@ export class RouteRunner {
               const beforeDomSnapshot = await page.evaluate(() => document.body.innerHTML);
 
               // 执行动作
+              logger.debug(`执行动作: ${control.text}`);
               await this.actionExecutor.execute(page, control, 'click');
               totalActions++;
 
@@ -136,6 +150,8 @@ export class RouteRunner {
           }
 
           checkedRoutes++;
+          performanceMonitor.end(`route-${route.id}`);
+          logger.info(`路由 ${route.id} 检查完成`);
         } catch (error) {
           // 路由执行失败
           allIssues.push({
@@ -154,12 +170,16 @@ export class RouteRunner {
             createdAt: new Date().toISOString(),
           });
           checkedRoutes++;
+          performanceMonitor.end(`route-${route.id}`);
         }
       }
     } finally {
       // 停止浏览器
+      logger.info('停止浏览器...');
       await this.session.stop();
     }
+
+    performanceMonitor.end('total-run');
 
     const finishedAt = new Date().toISOString();
 
@@ -205,6 +225,9 @@ export class RouteRunner {
       issuesFile: `${this.config.outputDir}/issues.ndjson`,
       artifactsDir: `${this.config.outputDir}/artifacts`,
     };
+
+    // 输出性能报告
+    logger.info(performanceMonitor.generateReport());
 
     return { summary, issues: allIssues };
   }
