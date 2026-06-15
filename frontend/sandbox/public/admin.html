@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>权限页面 - Surface QA 测试</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header>
+    <nav>
+      <div class="logo">Surface QA 测试</div>
+      <ul class="nav-links">
+        <li><a href="/">主页</a></li>
+        <li><a href="/login">登录</a></li>
+        <li><a href="/dashboard">仪表盘</a></li>
+        <li><a href="/profile">个人资料</a></li>
+        <li><a href="/error">错误页面</a></li>
+        <li><a href="/admin" class="active">权限页面</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main>
+    <section class="admin-section">
+      <h1>权限测试页面</h1>
+      <p>这个页面用于测试工具对权限错误的检测能力。</p>
+
+      <div class="admin-warning">
+        <strong>注意：</strong>此页面模拟需要管理员权限才能访问的内容。
+      </div>
+
+      <div class="feature-grid">
+        <div class="feature-card">
+          <h3>获取用户列表</h3>
+          <p>需要管理员权限才能获取完整的用户列表</p>
+          <button id="get-users" data-testid="get-users" class="btn">获取用户列表</button>
+          <div id="users-result" style="display: none; margin-top: 10px;"></div>
+        </div>
+
+        <div class="feature-card">
+          <h3>删除用户</h3>
+          <p>需要管理员权限才能删除用户</p>
+          <button id="delete-user" data-testid="delete-user" class="btn btn-danger">删除用户</button>
+          <div id="delete-result" style="display: none; margin-top: 10px;"></div>
+        </div>
+
+        <div class="feature-card">
+          <h3>系统设置</h3>
+          <p>需要管理员权限才能访问系统设置</p>
+          <button id="system-settings" data-testid="system-settings" class="btn">系统设置</button>
+          <div id="settings-result" style="display: none; margin-top: 10px;"></div>
+        </div>
+      </div>
+
+      <div class="error-info">
+        <h2>权限错误说明</h2>
+        <ul>
+          <li><strong>401 Unauthorized</strong>：用户未认证，需要登录</li>
+          <li><strong>403 Forbidden</strong>：用户已认证但权限不足</li>
+          <li><strong>404 Not Found</strong>：资源不存在或无权访问</li>
+        </ul>
+      </div>
+
+      <div id="admin-log" class="error-output" style="display: none; margin-top: 30px;">
+        <h3>请求日志</h3>
+        <pre id="admin-log-content"></pre>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <p>&copy; 2026 Surface QA 测试应用. All rights reserved.</p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

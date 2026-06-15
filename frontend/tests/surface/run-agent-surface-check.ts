@@ -76,7 +76,7 @@ async function main(): Promise<void> {
     }
 
     // 初始化反馈系统
-    const feedback = new FeedbackSink(config.outputDir);
+    const feedback = new FeedbackSink(config.outputDir, config);
     await feedback.init();
 
     // 创建路由运行器

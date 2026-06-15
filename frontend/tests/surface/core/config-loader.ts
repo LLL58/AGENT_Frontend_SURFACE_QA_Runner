@@ -41,6 +41,8 @@ export async function loadConfig(): Promise<SurfaceConfig> {
       afterActionWaitMs: defaultConfig.scan.afterActionWaitMs,
     },
     ignore: defaultConfig.ignore,
+    effectCheck: defaultConfig.effectCheck,
+    report: defaultConfig.report,
   };
 
   // 验证配置

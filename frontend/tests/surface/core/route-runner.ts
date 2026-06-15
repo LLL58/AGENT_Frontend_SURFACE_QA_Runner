@@ -69,7 +69,10 @@ export class RouteRunner {
           });
 
           // 等待页面加载
-          await page.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => {});
+          await page.waitForLoadState('networkidle', { timeout: 15000 }).catch(() => {});
+          
+          // 额外等待，确保页面内容完全渲染
+          await page.waitForTimeout(1000);
 
           // 健康检查
           const healthResult = await this.healthChecker.check(page, route);

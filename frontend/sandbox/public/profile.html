@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>个人资料 - Surface QA 测试</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header>
+    <nav>
+      <div class="logo">Surface QA 测试</div>
+      <ul class="nav-links">
+        <li><a href="/">主页</a></li>
+        <li><a href="/login">登录</a></li>
+        <li><a href="/dashboard">仪表盘</a></li>
+        <li><a href="/profile" class="active">个人资料</a></li>
+        <li><a href="/error">错误页面</a></li>
+        <li><a href="/admin">权限页面</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main>
+    <section class="profile-section">
+      <div class="profile-header">
+        <h1>个人资料</h1>
+        <button id="edit-button" data-testid="edit-button" class="btn">编辑资料</button>
+      </div>
+
+      <div class="profile-content">
+        <div class="avatar-section">
+          <div class="avatar" id="user-avatar">
+            <span>用</span>
+          </div>
+          <button id="upload-avatar" data-testid="upload-avatar" class="btn btn-small">上传头像</button>
+        </div>
+
+        <form id="profile-form" data-testid="profile-form">
+          <div class="form-group">
+            <label for="name">姓名</label>
+            <input type="text" id="name" data-testid="name" name="name" value="测试用户" placeholder="请输入姓名">
+          </div>
+          <div class="form-group">
+            <label for="email">邮箱</label>
+            <input type="email" id="email" data-testid="email" name="email" value="test@example.com" placeholder="请输入邮箱">
+          </div>
+          <div class="form-group">
+            <label for="phone">电话</label>
+            <input type="tel" id="phone" data-testid="phone" name="phone" value="13800138000" placeholder="请输入电话">
+          </div>
+          <div class="form-group">
+            <label for="bio">简介</label>
+            <textarea id="bio" data-testid="bio" name="bio" placeholder="请输入个人简介">这是一个测试用户的简介。</textarea>
+          </div>
+          <div class="form-actions">
+            <button type="submit" id="save-button" data-testid="save-button" class="btn btn-primary">保存</button>
+            <button type="button" id="cancel-button" data-testid="cancel-button" class="btn btn-secondary">取消</button>
+          </div>
+        </form>
+      </div>
+
+      <div id="profile-message" class="message" style="display: none;"></div>
+    </section>
+  </main>
+
+  <footer>
+    <p>&copy; 2026 Surface QA 测试应用. All rights reserved.</p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

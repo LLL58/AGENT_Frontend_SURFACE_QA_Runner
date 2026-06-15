@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>慢响应页面 - Surface QA 测试</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header>
+    <nav>
+      <div class="logo">Surface QA 测试</div>
+      <ul class="nav-links">
+        <li><a href="/">主页</a></li>
+        <li><a href="/login">登录</a></li>
+        <li><a href="/dashboard">仪表盘</a></li>
+        <li><a href="/profile">个人资料</a></li>
+        <li><a href="/error">错误页面</a></li>
+        <li><a href="/admin">权限页面</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main>
+    <section class="slow-section">
+      <h1>慢响应测试页面</h1>
+      <p>这个页面用于测试工具对慢响应和超时的处理能力。</p>
+
+      <div class="feature-grid">
+        <div class="feature-card">
+          <h3>慢响应请求</h3>
+          <p>点击按钮发送一个延迟 3 秒的请求</p>
+          <button id="slow-request" data-testid="slow-request" class="btn">发送慢请求</button>
+          <div id="slow-result" style="display: none; margin-top: 10px;">
+            <span class="loading"></span> 加载中...
+          </div>
+        </div>
+
+        <div class="feature-card">
+          <h3>超时请求</h3>
+          <p>点击按钮发送一个永远不会返回的请求</p>
+          <button id="timeout-request" data-testid="timeout-request" class="btn btn-danger">发送超时请求</button>
+          <div id="timeout-result" style="display: none; margin-top: 10px;">
+            <span class="loading"></span> 等待中...
+          </div>
+        </div>
+
+        <div class="feature-card">
+          <h3>快速请求</h3>
+          <p>点击按钮发送一个正常的快速请求</p>
+          <button id="fast-request" data-testid="fast-request" class="btn btn-primary">发送快速请求</button>
+          <div id="fast-result" style="display: none; margin-top: 10px;">
+            请求成功！
+          </div>
+        </div>
+      </div>
+
+      <div id="request-log" class="error-output" style="display: none; margin-top: 30px;">
+        <h3>请求日志</h3>
+        <pre id="log-content"></pre>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <p>&copy; 2026 Surface QA 测试应用. All rights reserved.</p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

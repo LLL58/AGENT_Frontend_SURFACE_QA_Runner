@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>表单验证 - Surface QA 测试</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header>
+    <nav>
+      <div class="logo">Surface QA 测试</div>
+      <ul class="nav-links">
+        <li><a href="/">主页</a></li>
+        <li><a href="/login">登录</a></li>
+        <li><a href="/dashboard">仪表盘</a></li>
+        <li><a href="/profile">个人资料</a></li>
+        <li><a href="/error">错误页面</a></li>
+        <li><a href="/admin">权限页面</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main>
+    <section class="validation-section">
+      <h1>表单验证测试</h1>
+      <p>这个页面用于测试工具对表单验证错误的检测能力。</p>
+
+      <div class="validation-rules">
+        <h2>验证规则</h2>
+        <ul>
+          <li>姓名：必填，至少 2 个字符</li>
+          <li>邮箱：必填，格式必须正确</li>
+          <li>密码：必填，至少 6 个字符</li>
+          <li>确认密码：必须与密码一致</li>
+          <li>年龄：必填，必须是 1-120 之间的数字</li>
+          <li>网站：可选，如果填写必须是有效 URL</li>
+        </ul>
+      </div>
+
+      <form id="validation-form" data-testid="validation-form">
+        <div class="form-group">
+          <label for="val-name">姓名 *</label>
+          <input type="text" id="val-name" data-testid="val-name" name="name" placeholder="请输入姓名">
+          <div class="error" id="val-name-error" style="display: none;"></div>
+        </div>
+
+        <div class="form-group">
+          <label for="val-email">邮箱 *</label>
+          <input type="email" id="val-email" data-testid="val-email" name="email" placeholder="请输入邮箱">
+          <div class="error" id="val-email-error" style="display: none;"></div>
+        </div>
+
+        <div class="form-group">
+          <label for="val-password">密码 *</label>
+          <input type="password" id="val-password" data-testid="val-password" name="password" placeholder="请输入密码">
+          <div class="error" id="val-password-error" style="display: none;"></div>
+        </div>
+
+        <div class="form-group">
+          <label for="val-confirm-password">确认密码 *</label>
+          <input type="password" id="val-confirm-password" data-testid="val-confirm-password" name="confirmPassword" placeholder="请再次输入密码">
+          <div class="error" id="val-confirm-password-error" style="display: none;"></div>
+        </div>
+
+        <div class="form-group">
+          <label for="val-age">年龄 *</label>
+          <input type="number" id="val-age" data-testid="val-age" name="age" placeholder="请输入年龄" min="1" max="120">
+          <div class="error" id="val-age-error" style="display: none;"></div>
+        </div>
+
+        <div class="form-group">
+          <label for="val-website">网站</label>
+          <input type="url" id="val-website" data-testid="val-website" name="website" placeholder="请输入网站地址">
+          <div class="error" id="val-website-error" style="display: none;"></div>
+        </div>
+
+        <div class="form-group">
+          <label class="checkbox-label">
+            <input type="checkbox" id="val-agree" data-testid="val-agree" name="agree">
+            <span>我同意服务条款 *</span>
+          </label>
+          <div class="error" id="val-agree-error" style="display: none;"></div>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" id="val-submit" data-testid="val-submit" class="btn btn-primary">提交</button>
+          <button type="button" id="val-reset" data-testid="val-reset" class="btn btn-secondary">重置</button>
+          <button type="button" id="val-test-errors" data-testid="val-test-errors" class="btn btn-danger">测试验证错误</button>
+        </div>
+      </form>
+
+      <div id="validation-message" class="message" style="display: none;"></div>
+    </section>
+  </main>
+
+  <footer>
+    <p>&copy; 2026 Surface QA 测试应用. All rights reserved.</p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

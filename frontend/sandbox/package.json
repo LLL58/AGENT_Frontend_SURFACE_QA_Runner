@@ -1,0 +1,13 @@
+{
+  "name": "surface-qa-sandbox",
+  "version": "1.0.0",
+  "description": "Surface QA Agent Runner - 沙盒测试应用",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "keywords": ["sandbox", "testing", "surface-qa"],
+  "author": "AGENT Team",
+  "license": "MIT"
+}

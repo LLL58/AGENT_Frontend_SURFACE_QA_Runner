@@ -34,4 +34,28 @@ export const routes: SurfaceRoute[] = [
     url: '/error',
     requireLogin: false,
   },
+  {
+    id: 'white-screen',
+    name: '白屏页面',
+    url: '/white-screen',
+    requireLogin: false,
+  },
+  {
+    id: 'slow',
+    name: '慢响应页面',
+    url: '/slow',
+    requireLogin: false,
+  },
+  {
+    id: 'form',
+    name: '表单验证页面',
+    url: '/form',
+    requireLogin: false,
+  },
+  {
+    id: 'admin',
+    name: '权限页面',
+    url: '/admin',
+    requireLogin: false,
+  },
 ];

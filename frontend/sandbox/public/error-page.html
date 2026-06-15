@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>错误页面 - Surface QA 测试</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header>
+    <nav>
+      <div class="logo">Surface QA 测试</div>
+      <ul class="nav-links">
+        <li><a href="/">主页</a></li>
+        <li><a href="/login">登录</a></li>
+        <li><a href="/dashboard">仪表盘</a></li>
+        <li><a href="/profile">个人资料</a></li>
+        <li><a href="/error" class="active">错误页面</a></li>
+        <li><a href="/admin">权限页面</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main>
+    <section class="error-section">
+      <h1>错误测试页面</h1>
+      <p>这个页面故意包含各种错误，用于测试错误检测功能。</p>
+
+      <div class="error-controls">
+        <button id="trigger-error" data-testid="trigger-error" class="btn btn-danger">触发 JavaScript 错误</button>
+        <button id="trigger-network-error" data-testid="trigger-network-error" class="btn btn-danger">触发网络请求错误</button>
+        <button id="trigger-async-error" data-testid="trigger-async-error" class="btn btn-danger">触发异步错误</button>
+        <button id="trigger-console-error" data-testid="trigger-console-error" class="btn btn-danger">触发控制台错误</button>
+      </div>
+
+      <div class="error-info">
+        <h2>错误类型说明</h2>
+        <ul>
+          <li><strong>JavaScript 错误</strong>：页面加载时会自动抛出一个未捕获的异常</li>
+          <li><strong>网络请求错误</strong>：请求不存在的 API 端点</li>
+          <li><strong>异步错误</strong>：在异步操作中抛出的错误</li>
+          <li><strong>控制台错误</strong>：使用 console.error 输出错误</li>
+        </ul>
+      </div>
+
+      <div id="error-output" class="error-output" style="display: none;">
+        <h3>错误输出</h3>
+        <pre id="error-message"></pre>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <p>&copy; 2026 Surface QA 测试应用. All rights reserved.</p>
+  </footer>
+
+  <!-- 故意包含的 JavaScript 错误 -->
+  <script>
+    // 页面加载时抛出错误
+    window.addEventListener('load', function() {
+      // 故意触发一个未捕获的异常
+      setTimeout(function() {
+        throw new Error('这是一个故意触发的 JavaScript 错误');
+      }, 100);
+    });
+  </script>
+
+  <script src="app.js"></script>
+</body>
+</html>
