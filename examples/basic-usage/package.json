@@ -1,0 +1,13 @@
+{
+  "name": "surface-qa-basic-usage",
+  "version": "1.0.0",
+  "description": "Surface QA Agent Runner 基本使用示例",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js",
+    "test": "node test-call.js"
+  },
+  "dependencies": {
+    "surface-qa-agent-runner": "file:../../frontend"
+  }
+}
