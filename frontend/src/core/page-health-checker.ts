@@ -1,6 +1,7 @@
 import type { Page } from 'playwright';
 import type { SurfaceRoute, PageHealthResult, AgentIssue } from './types.js';
 import type { ErrorCollector } from './error-collector.js';
+import { logger } from '../utils/logger.js';
 
 /**
  * 页面健康检查器
@@ -13,11 +14,14 @@ export class PageHealthChecker {
    * 检查页面健康状态
    */
   async check(page: Page, route: SurfaceRoute): Promise<PageHealthResult> {
+    logger.info(`检查页面健康: ${route.url}`);
+    
     const issues: Omit<AgentIssue, 'id' | 'runId' | 'createdAt'>[] = [];
 
     // 1. 检查白屏
     const isWhiteScreen = await this.checkWhiteScreen(page);
     if (isWhiteScreen) {
+      logger.warn(`检测到白屏: ${route.url}`);
       issues.push({
         category: 'white-screen',
         severity: 'critical',
@@ -38,6 +42,7 @@ export class PageHealthChecker {
     const snapshot = this.errorCollector.getSnapshot();
     
     if (snapshot.pageErrors.length > 0) {
+      logger.warn(`检测到页面错误: ${snapshot.pageErrors.length} 个`);
       issues.push({
         category: 'page-error',
         severity: 'critical',
@@ -57,6 +62,7 @@ export class PageHealthChecker {
 
     // 3. 检查控制台错误
     if (snapshot.consoleErrors.length > 0) {
+      logger.warn(`检测到控制台错误: ${snapshot.consoleErrors.length} 个`);
       issues.push({
         category: 'console-error',
         severity: 'error',
@@ -76,6 +82,7 @@ export class PageHealthChecker {
 
     // 4. 检查网络错误
     if (snapshot.networkErrors.length > 0 || snapshot.requestFailures.length > 0) {
+      logger.warn('检测到网络错误');
       issues.push({
         category: 'network-error',
         severity: 'error',
@@ -93,8 +100,11 @@ export class PageHealthChecker {
       });
     }
 
+    const ok = issues.length === 0;
+    logger.info(`页面健康检查完成: ${route.url} - ${ok ? '健康' : '有问题'}`);
+
     return {
-      ok: issues.length === 0,
+      ok,
       issues,
     };
   }
@@ -137,7 +147,8 @@ export class PageHealthChecker {
 
       // 否则根据文本长度和可见元素判断
       return bodyText < 10 && visibleElements < 3;
-    } catch {
+    } catch (error) {
+      logger.warn('检查白屏失败:', error);
       return false;
     }
   }
