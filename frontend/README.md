@@ -10,7 +10,12 @@
 - **动作执行**：自动点击安全控件并检查结果
 - **错误收集**：收集 console.error、pageerror、网络请求错误
 - **证据保存**：截图、HTML、DOM 快照
-- **结构化输出**：JSON、NDJSON 格式输出
+- **结构化输出**：JSON、NDJSON、Markdown、HTML 格式输出
+- **无效果检测**：检测控件操作后无任何效果的情况
+- **iframe 支持**：扫描 iframe 内的控件
+- **浏览器复用**：支持浏览器实例复用，提升性能
+- **配置文件支持**：支持 surface.config.ts 配置文件
+- **storage-state 认证**：支持已保存的登录态
 
 ## 快速开始
 
@@ -86,6 +91,8 @@ npm run surface:agent:ci
 .agent-feedback/
 ├── run-summary.json          # 运行摘要
 ├── issues.ndjson             # 问题列表（每行一个 JSON）
+├── report.md                 # Markdown 报告（人类可读）
+├── report.html               # HTML 报告（可视化）
 ├── issues/                   # 单个问题详情
 │   ├── issue-001.json
 │   └── issue-002.json
@@ -120,7 +127,7 @@ npm run surface:agent:ci
   "totalRoutes": 3,
   "totalActions": 24,
   "totalIssues": 2,
-  "summaryFile": ".agent-feedback/latest/run-summary.json"
+  "summaryFile": ".agent-feedback/run-summary.json"
 }
 ```
 
@@ -154,6 +161,38 @@ export const routes: SurfaceRoute[] = [
 ];
 ```
 
+## 检测能力
+
+### 错误类型
+
+| 类型 | 说明 | 严重程度 |
+|------|------|----------|
+| page-error | JavaScript 运行时错误 | critical |
+| white-screen | 页面白屏 | critical |
+| network-error | 网络请求错误 (4xx/5xx) | error |
+| action-timeout | 动作执行超时 | error |
+| no-observable-effect | 控件操作后无效果 | warning |
+| console-error | 控制台错误 | error |
+
+### 控件类型
+
+| 类型 | 说明 |
+|------|------|
+| button | 按钮 |
+| link | 链接 |
+| input | 输入框 |
+| textarea | 文本域 |
+| select | 下拉选择框 |
+
+### 动作类型
+
+| 类型 | 说明 |
+|------|------|
+| click | 点击 |
+| fill | 填写 |
+| select | 选择 |
+| check | 勾选 |
+
 ## Agent 消费协议
 
 Agent 每次运行后只需要遵守这个协议：
@@ -162,8 +201,9 @@ Agent 每次运行后只需要遵守这个协议：
 2. 读取 stdout 中 `surface-qa.summary`
 3. 如果 `status=passed`，结束
 4. 如果 `status=failed`：
-   - 读取 `.agent-feedback/latest/run-summary.json`
-   - 读取 `.agent-feedback/latest/issues.ndjson`
+   - 读取 `.agent-feedback/report.md`（人类可读）
+   - 读取 `.agent-feedback/run-summary.json`（机器可读）
+   - 读取 `.agent-feedback/issues.ndjson`（流式格式）
 5. 按 severity 排序：critical > error > warning > info
 6. 对每个 issue：
    - 查看 route、action、message
@@ -189,14 +229,25 @@ frontend/
 ├── tsconfig.json
 ├── playwright.config.ts
 ├── vitest.config.ts
-└── tests/
-    ├── surface/
-    │   ├── run-agent-surface-check.ts  # 入口文件
-    │   ├── config/                     # 配置
-    │   ├── core/                       # 核心模块
-    │   ├── output/                     # 输出模块
-    │   └── utils/                      # 工具函数
-    └── unit/                           # 单元测试
+├── src/                            # 源代码
+│   ├── index.ts                    # 模块导出入口
+│   ├── cli.ts                      # CLI 入口
+│   ├── core/                       # 核心模块
+│   ├── output/                     # 输出模块
+│   ├── config/                     # 配置
+│   └── utils/                      # 工具函数
+├── tests/
+│   ├── surface/                    # 源代码（同步）
+│   ├── unit/                       # 单元测试
+│   ├── integration/                # 集成测试
+│   └── e2e/                        # 端到端测试
+├── sandbox/                        # 沙盒测试环境
+│   ├── server.js                   # 本地服务器
+│   └── public/                     # 测试页面
+└── docs/                           # 文档
+    ├── API.md                      # API 文档
+    ├── TROUBLESHOOTING.md          # 故障排查
+    └── CONTRIBUTING.md             # 贡献指南
 ```
 
 ## License

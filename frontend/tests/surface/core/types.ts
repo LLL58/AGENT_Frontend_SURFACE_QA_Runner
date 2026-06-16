@@ -181,8 +181,8 @@ export interface AgentIssue {
   reproduceSteps: string[];
   evidence: {
     consoleErrors?: string[];
-    pageErrors?: string[];
-    networkErrors?: string[];
+    pageErrors?: (string | PageErrorDetail)[];
+    networkErrors?: (string | NetworkErrorDetail)[];
     screenshotPath?: string;
     htmlPath?: string;
   };
@@ -229,4 +229,5 @@ export interface ActionCheckResult {
   afterUrl: string;
   urlChanged: boolean;
   hasErrors: boolean;
+  hasObservableEffect?: boolean;
 }

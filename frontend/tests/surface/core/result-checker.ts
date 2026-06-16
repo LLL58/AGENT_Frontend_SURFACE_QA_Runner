@@ -1,5 +1,5 @@
 import type { Page } from 'playwright';
-import type { SurfaceRoute, ControlCandidate, ActionCheckResult, AgentIssue, BrowserErrorSnapshot, SurfaceConfig, EffectCheckConfig } from './types.js';
+import type { SurfaceRoute, ControlCandidate, ActionCheckResult, AgentIssue, BrowserErrorSnapshot, SurfaceConfig } from './types.js';
 import type { ErrorCollector } from './error-collector.js';
 
 /**

@@ -1,4 +1,4 @@
-import type { AgentIssue, AgentIssueCategory, AgentIssueSeverity } from '../core/types.js';
+import type { AgentIssue, AgentIssueCategory, AgentIssueSeverity, ActionType } from '../core/types.js';
 
 /**
  * Issue 工厂
@@ -15,7 +15,7 @@ export class IssueFactory {
     title: string;
     message: string;
     route: { id: string; name: string; url: string };
-    action?: { type: string; selector?: string; text?: string };
+    action?: { type: ActionType; selector?: string; text?: string };
     reproduceSteps: string[];
     evidence: AgentIssue['evidence'];
     agentHints: AgentIssue['agentHints'];

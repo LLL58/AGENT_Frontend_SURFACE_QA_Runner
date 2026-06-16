@@ -313,6 +313,9 @@ ${sections.join('\n\n')}`;
     // JavaScript 错误详情
     if (issue.evidence?.pageErrors && issue.evidence.pageErrors.length > 0) {
       const errorDetails = issue.evidence.pageErrors.map(error => {
+        if (typeof error === 'string') {
+          return `**错误消息**: ${error}`;
+        }
         let detail = `**错误类型**: ${error.type || 'Error'}`;
         detail += `\n**错误消息**: ${error.message}`;
         return detail;
@@ -324,6 +327,10 @@ ${sections.join('\n\n')}`;
     // 网络错误详情
     if (issue.evidence?.networkErrors && issue.evidence.networkErrors.length > 0) {
       const networkDetails = issue.evidence.networkErrors.map(error => {
+        if (typeof error === 'string') {
+          return `**错误**: ${error}`;
+        }
+        
         let detail = `**请求 URL**: ${error.url}`;
         detail += `\n**请求方法**: ${error.method}`;
         

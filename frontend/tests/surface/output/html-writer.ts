@@ -643,6 +643,11 @@ export class HtmlWriter {
     // JavaScript 错误详情
     if (issue.evidence?.pageErrors && issue.evidence.pageErrors.length > 0) {
       const errorDetails = issue.evidence.pageErrors.map(error => {
+        if (typeof error === 'string') {
+          return `<div class="error-detail">
+            <p><strong>错误消息:</strong> ${error}</p>
+          </div>`;
+        }
         return `<div class="error-detail">
           <p><strong>错误类型:</strong> ${error.type || 'Error'}</p>
           <p><strong>错误消息:</strong> ${error.message}</p>
@@ -658,6 +663,12 @@ export class HtmlWriter {
     // 网络错误详情
     if (issue.evidence?.networkErrors && issue.evidence.networkErrors.length > 0) {
       const networkDetails = issue.evidence.networkErrors.map(error => {
+        if (typeof error === 'string') {
+          return `<div class="error-detail">
+            <p><strong>错误:</strong> ${error}</p>
+          </div>`;
+        }
+        
         let detail = `<p><strong>请求 URL:</strong> ${error.url}</p>`;
         detail += `<p><strong>请求方法:</strong> ${error.method}</p>`;
         

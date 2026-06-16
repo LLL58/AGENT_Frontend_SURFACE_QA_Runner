@@ -5,6 +5,33 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，
 并且本项目遵循 [语义化版本控制](https://semver.org/lang/zh-CN/)。
 
+## [1.2.0] - 2026-06-16
+
+### 新增
+- 无效果检测功能（检测控件操作后无任何效果）
+- iframe 支持（扫描 iframe 内的控件）
+- 浏览器复用（BrowserPool，提升性能）
+- storage-state 认证支持
+- 配置文件支持（surface.config.ts）
+- 完整的单元测试覆盖（161个测试用例）
+- 沙盒测试环境（9个测试页面，11个API端点）
+- 人类可读测试报告（Markdown 和 HTML 格式）
+
+### 修复
+- 修复 TypeScript 编译错误（110+ 错误）
+- 修复空 catch 块，添加日志记录
+- 修复选择器生成算法，避免使用 nth-of-type
+- 修复 config-loader 缺少 effectCheck 和 report 配置
+- 修复 FeedbackSink 参数问题
+- 修复性能测试阈值
+
+### 改进
+- 改进错误处理，所有模块添加日志
+- 改进选择器稳定性，优先使用 data-testid
+- 改进页面加载等待时间
+- 改进测试覆盖（161个测试用例，100%通过）
+- 改进文档（README、API、故障排查）
+
 ## [1.1.0] - 2026-06-16
 
 ### 新增

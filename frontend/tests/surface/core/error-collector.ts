@@ -1,5 +1,6 @@
 import type { Page, Response } from 'playwright';
 import type { BrowserErrorSnapshot, PageErrorDetail, NetworkErrorDetail } from './types.js';
+import { logger } from '../utils/logger.js';
 
 /**
  * 错误收集器
@@ -17,13 +18,17 @@ export class ErrorCollector {
    */
   attach(page: Page): void {
     if (this.attached) {
+      logger.warn('错误收集器已附加');
       return;
     }
+
+    logger.info('附加错误收集器...');
 
     // 监听 console.error
     page.on('console', msg => {
       if (msg.type() === 'error') {
         this.consoleErrors.push(msg.text());
+        logger.debug('控制台错误:', msg.text());
       }
     });
 
@@ -33,6 +38,7 @@ export class ErrorCollector {
         message: error.message,
         type: error.name || 'Error',
       });
+      logger.debug('页面错误:', error.message);
     });
 
     // 监听响应错误（4xx/5xx）
@@ -52,20 +58,22 @@ export class ErrorCollector {
           // 尝试获取响应体
           try {
             networkError.responseBody = await response.text();
-          } catch {
-            // 忽略响应体获取失败
+          } catch (error) {
+            logger.debug('获取响应体失败:', error);
           }
 
           // 尝试获取请求体
           try {
             networkError.requestBody = response.request().postData() || undefined;
-          } catch {
-            // 忽略请求体获取失败
+          } catch (error) {
+            logger.debug('获取请求体失败:', error);
           }
 
           this.networkErrors.push(networkError);
-        } catch {
+          logger.debug('网络错误:', `${status} ${response.url()}`);
+        } catch (error) {
           // 如果获取详细信息失败，使用简化版本
+          logger.warn('获取网络错误详情失败:', error);
           this.networkErrors.push({
             url: response.url(),
             method: response.request().method(),
@@ -78,10 +86,14 @@ export class ErrorCollector {
 
     // 监听请求失败
     page.on('requestfailed', request => {
-      this.requestFailures.push(`${request.failure()?.error || 'Unknown'}: ${request.url()}`);
+      const failure = request.failure();
+      const errorMessage = failure ? failure.errorText : 'Unknown';
+      this.requestFailures.push(`${errorMessage}: ${request.url()}`);
+      logger.debug('请求失败:', request.url());
     });
 
     this.attached = true;
+    logger.info('错误收集器已附加');
   }
 
   /**
@@ -92,6 +104,7 @@ export class ErrorCollector {
     this.pageErrors = [];
     this.networkErrors = [];
     this.requestFailures = [];
+    logger.debug('错误收集器已重置');
   }
 
   /**
