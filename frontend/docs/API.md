@@ -434,3 +434,64 @@ interface AgentRunSummary {
   artifactsDir: string;
 }
 ```
+
+---
+
+## 分页检测模块
+
+### PaginationConfig
+
+```typescript
+interface PaginationConfig {
+  enabled: boolean;        // 是否启用分页检测
+  maxPages: number;        // 最大检测页数
+  waitForUpdate: number;   // 等待页面更新时间（ms）
+  selectors: PaginationSelectors;
+}
+
+interface PaginationSelectors {
+  nextButton: string[];           // 下一页按钮选择器
+  prevButton: string[];           // 上一页按钮选择器
+  pageNumbers: string[];          // 页码选择器
+  currentPage: string[];          // 当前页码选择器
+  paginationContainer: string[];  // 分页容器选择器
+}
+```
+
+### PaginationCheckResult
+
+```typescript
+interface PaginationCheckResult {
+  hasPagination: boolean;   // 是否有分页控件
+  currentPage: number;      // 当前页码
+  totalPages?: number;      // 总页数
+  issues: PaginationIssue[];
+}
+
+interface PaginationIssue {
+  type: 'click-failed' | 'no-data-change' | 'page-not-updated' | 'stuck-loading';
+  severity: 'warning' | 'error';
+  message: string;
+  pageNumber: number;
+}
+```
+
+### 使用示例
+
+```typescript
+import { PaginationChecker } from 'surface-qa-agent-runner';
+
+const checker = new PaginationChecker(config.pagination);
+const result = await checker.checkPagination(page, 'dashboard');
+
+if (result.hasPagination) {
+  console.log(`检测到分页，当前第 ${result.currentPage} 页`);
+  
+  if (result.issues.length > 0) {
+    console.log('发现问题:');
+    result.issues.forEach(issue => {
+      console.log(`- [${issue.severity}] ${issue.message}`);
+    });
+  }
+}
+```

@@ -5,6 +5,70 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>仪表盘 - Surface QA 测试</title>
   <link rel="stylesheet" href="styles.css">
+  <style>
+    .pagination {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+      margin-top: 20px;
+      padding: 16px 0;
+    }
+
+    .pagination button {
+      padding: 8px 16px;
+      border: 1px solid #ddd;
+      background: #fff;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.2s;
+    }
+
+    .pagination button:hover:not(:disabled) {
+      background: #007bff;
+      color: #fff;
+      border-color: #007bff;
+    }
+
+    .pagination button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .pagination button.active {
+      background: #007bff;
+      color: #fff;
+      border-color: #007bff;
+    }
+
+    .page-info {
+      margin: 0 12px;
+      color: #666;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 20px;
+      color: #666;
+    }
+
+    .loading-spinner {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 2px solid #ddd;
+      border-top-color: #007bff;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-right: 8px;
+      vertical-align: middle;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
 </head>
 <body>
   <header>
@@ -52,43 +116,33 @@
       </div>
 
       <div class="table-section">
-        <h2>最近活动</h2>
+        <h2>用户列表</h2>
         <table id="activity-table" data-testid="activity-table">
           <thead>
             <tr>
-              <th>时间</th>
-              <th>用户</th>
-              <th>操作</th>
+              <th>ID</th>
+              <th>姓名</th>
+              <th>邮箱</th>
               <th>状态</th>
             </tr>
           </thead>
-          <tbody>
-            <tr data-testid="table-row-1">
-              <td>2026-06-15 10:30</td>
-              <td>张三</td>
-              <td>登录系统</td>
-              <td><span class="status-success">成功</span></td>
-            </tr>
-            <tr data-testid="table-row-2">
-              <td>2026-06-15 10:25</td>
-              <td>李四</td>
-              <td>提交订单</td>
-              <td><span class="status-success">成功</span></td>
-            </tr>
-            <tr data-testid="table-row-3">
-              <td>2026-06-15 10:20</td>
-              <td>王五</td>
-              <td>修改资料</td>
-              <td><span class="status-warning">待审核</span></td>
-            </tr>
-            <tr data-testid="table-row-4">
-              <td>2026-06-15 10:15</td>
-              <td>赵六</td>
-              <td>删除记录</td>
-              <td><span class="status-error">失败</span></td>
-            </tr>
+          <tbody id="table-body">
+            <!-- 动态加载 -->
           </tbody>
         </table>
+
+        <div class="pagination" data-testid="pagination" id="pagination">
+          <button id="prev-page" data-testid="prev-page" disabled>上一页</button>
+          <span class="page-info">
+            第 <span id="current-page" data-testid="current-page">1</span> 页 / 共 <span id="total-pages">5</span> 页
+          </span>
+          <button id="next-page" data-testid="next-page">下一页</button>
+          <button class="page-number" data-testid="page-number">1</button>
+          <button class="page-number" data-testid="page-number">2</button>
+          <button class="page-number" data-testid="page-number">3</button>
+          <button class="page-number" data-testid="page-number">4</button>
+          <button class="page-number" data-testid="page-number">5</button>
+        </div>
       </div>
     </section>
   </main>
@@ -98,5 +152,83 @@
   </footer>
 
   <script src="app.js"></script>
+  <script>
+    // 模拟数据
+    const allUsers = [];
+    for (let i = 1; i <= 50; i++) {
+      allUsers.push({
+        id: i,
+        name: `用户${i}`,
+        email: `user${i}@example.com`,
+        status: i % 3 === 0 ? '禁用' : '正常'
+      });
+    }
+
+    const pageSize = 10;
+    let currentPage = 1;
+    const totalPages = Math.ceil(allUsers.length / pageSize);
+
+    // 渲染表格
+    function renderTable(page) {
+      const start = (page - 1) * pageSize;
+      const end = start + pageSize;
+      const users = allUsers.slice(start, end);
+
+      const tbody = document.getElementById('table-body');
+      tbody.innerHTML = users.map(user => `
+        <tr data-testid="table-row-${user.id}">
+          <td>${user.id}</td>
+          <td>${user.name}</td>
+          <td>${user.email}</td>
+          <td><span class="status-${user.status === '正常' ? 'success' : 'error'}">${user.status}</span></td>
+        </tr>
+      `).join('');
+
+      // 更新页码
+      document.getElementById('current-page').textContent = page;
+      document.getElementById('total-pages').textContent = totalPages;
+
+      // 更新按钮状态
+      document.getElementById('prev-page').disabled = page <= 1;
+      document.getElementById('next-page').disabled = page >= totalPages;
+
+      // 更新页码按钮状态
+      document.querySelectorAll('.page-number').forEach((btn, index) => {
+        btn.classList.toggle('active', index + 1 === page);
+      });
+    }
+
+    // 初始化
+    renderTable(currentPage);
+
+    // 上一页
+    document.getElementById('prev-page').addEventListener('click', () => {
+      if (currentPage > 1) {
+        currentPage--;
+        renderTable(currentPage);
+      }
+    });
+
+    // 下一页
+    document.getElementById('next-page').addEventListener('click', () => {
+      if (currentPage < totalPages) {
+        currentPage++;
+        renderTable(currentPage);
+      }
+    });
+
+    // 页码按钮
+    document.querySelectorAll('.page-number').forEach(btn => {
+      btn.addEventListener('click', () => {
+        currentPage = parseInt(btn.textContent);
+        renderTable(currentPage);
+      });
+    });
+
+    // 刷新按钮
+    document.getElementById('refresh-button').addEventListener('click', () => {
+      renderTable(currentPage);
+    });
+  </script>
 </body>
 </html>

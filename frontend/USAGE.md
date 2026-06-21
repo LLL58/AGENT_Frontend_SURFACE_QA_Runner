@@ -428,7 +428,159 @@ curl http://localhost:3000
 chmod +x node_modules/.bin/tsx
 ```
 
+## OpenCode 集成
+
+### 概述
+
+Surface QA Agent Runner 已集成到 OpenCode，可以通过自然语言直接调用。
+
+### 安装
+
+工具已安装到 OpenCode 全局配置：
+
+```
+~/.config/opencode/tools/surface-qa.ts
+~/.config/opencode/skills/surface-qa-usage/SKILL.md
+```
+
+### 调用方式
+
+#### 方式 1：检查整个应用
+
+```
+请检查 http://localhost:3000 的前端健康状态
+```
+
+#### 方式 2：检查指定页面
+
+```
+请检查 http://localhost:3000 的登录页面
+```
+
+#### 方式 3：只检查健康状态
+
+```
+请检查 http://localhost:3000 的页面健康状态，不执行控件操作
+```
+
+#### 方式 4：检查多个页面
+
+```
+请检查 http://localhost:3000 的前 5 个页面
+```
+
+### 参数说明
+
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| baseUrl | string | 是 | 目标应用地址 |
+| route | string | 否 | 只检查指定路由 |
+| healthOnly | boolean | 否 | 只检查健康状态 |
+| maxRoutes | number | 否 | 最大路由数 |
+| maxControls | number | 否 | 每页最大控件数 |
+
+### 结果解读
+
+#### 状态说明
+
+| 状态 | 说明 | 处理建议 |
+|------|------|----------|
+| passed | 测试通过，无问题 | 无需处理 |
+| passed_with_warnings | 有警告但通过 | 建议修复警告 |
+| failed | 测试失败，有问题 | 需要修复问题 |
+
+#### 严重程度
+
+| 级别 | 说明 | 处理建议 |
+|------|------|----------|
+| critical | 严重问题 | 立即修复 |
+| error | 错误 | 尽快修复 |
+| warning | 警告 | 建议修复 |
+| info | 信息 | 参考 |
+
+#### 问题类型
+
+| 类型 | 说明 | 常见原因 |
+|------|------|----------|
+| page-error | JavaScript 运行时错误 | 代码 bug |
+| white-screen | 页面白屏 | 渲染失败 |
+| network-error | 网络请求错误 | API 异常 |
+| action-timeout | 动作执行超时 | 元素不可交互 |
+| no-observable-effect | 控件操作后无效果 | 事件未绑定 |
+| console-error | 控制台错误 | 代码警告 |
+
+### 示例对话
+
+**用户**: 请检查 http://localhost:3000 的前端健康状态
+
+**Agent**: 我来检查前端应用的健康状态...
+
+[调用 surface-qa 工具]
+
+**结果**:
+```
+状态: failed
+扫描页面: 5
+发现问题: 3
+
+问题列表:
+- [critical] 页面运行时错误 - /dashboard
+- [error] 网络请求失败 - /api/users
+- [warning] 控件操作后无效果 - /login
+```
+
+**建议**: 修复 critical 和 error 级别的问题。
+
+### 故障排查
+
+#### 问题：工具无法启动
+
+**可能原因**：
+- Playwright 未安装
+- Node.js 版本过低
+
+**解决方案**：
+```bash
+cd frontend
+npm install
+npx playwright install
+```
+
+#### 问题：目标应用无法访问
+
+**可能原因**：
+- 应用未启动
+- 端口错误
+
+**解决方案**：
+```bash
+# 检查应用是否运行
+curl http://localhost:3000
+```
+
+#### 问题：浏览器启动失败
+
+**可能原因**：
+- 浏览器未安装
+- 内存不足
+
+**解决方案**：
+```bash
+# 重新安装浏览器
+npx playwright install chromium
+```
+
 ## 更新日志
+
+### v1.2.0
+
+- 新增 OpenCode 集成
+- 新增 Custom Tool 支持
+- 新增 Agent Skill 支持
+- 新增无效果检测功能
+- 新增 iframe 支持
+- 新增浏览器复用
+- 新增 storage-state 认证
 
 ### v1.0.0
 
