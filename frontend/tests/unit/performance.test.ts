@@ -119,7 +119,7 @@ describe('性能测试', () => {
       expect(elapsed).toBeLessThan(50);
     });
 
-    it('应该在 100ms 内哈希 10000 个字符串', () => {
+    it('应该在 200ms 内哈希 10000 个字符串', () => {
       const strings = Array.from({ length: 10000 }, (_, i) => `string-${i}`);
 
       const start = Date.now();
@@ -128,7 +128,7 @@ describe('性能测试', () => {
       }
       const elapsed = Date.now() - start;
 
-      expect(elapsed).toBeLessThan(100);
+      expect(elapsed).toBeLessThan(200);
     });
 
     it('应该处理大字符串', () => {

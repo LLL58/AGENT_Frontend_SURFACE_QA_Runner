@@ -11,6 +11,16 @@ import { FeedbackSink } from './output/feedback-sink.js';
 import { routes } from './config/routes.js';
 import type { SurfaceRoute } from './core/types.js';
 
+// 检查是否是 ACP 模式
+const args = process.argv.slice(2);
+if (args[0] === 'acp') {
+  // 动态导入 ACP 处理器
+  const { AcpHandler } = await import('./acp/handler.js');
+  const handler = new AcpHandler();
+  await handler.start();
+  process.exit(0);
+}
+
 /**
  * 解析命令行参数
  */
